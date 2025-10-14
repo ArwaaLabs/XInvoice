@@ -7,7 +7,12 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
+import { Pool, neonConfig } from "@neondatabase/serverless";
+import ws from "ws";
 import { storage } from "./storage";
+
+// Configure WebSocket for Neon serverless
+neonConfig.webSocketConstructor = ws;
 
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
@@ -26,12 +31,23 @@ const getOidcConfig = memoize(
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
+  
+  // Create a PostgreSQL Pool with WebSocket support for session storage
+  const pool = new Pool({ 
+    connectionString: process.env.DATABASE_URL,
+  });
+  
+  pool.on('error', (err: Error) => {
+    console.error('Session pool error:', err);
+  });
+  
   const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
+    pool: pool,
     createTableIfMissing: false,
     ttl: sessionTtl,
     tableName: "sessions",
   });
+  
   return session({
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
