@@ -52,7 +52,10 @@ export const companySettings = pgTable("company_settings", {
 });
 
 export const insertClientSchema = createInsertSchema(clients).omit({ id: true });
-export const insertInvoiceSchema = createInsertSchema(invoices).omit({ id: true });
+export const insertInvoiceSchema = createInsertSchema(invoices, {
+  issueDate: z.coerce.date(),
+  dueDate: z.coerce.date(),
+}).omit({ id: true });
 export const insertLineItemSchema = createInsertSchema(lineItems).omit({ id: true });
 export const insertCompanySettingsSchema = createInsertSchema(companySettings).omit({ id: true });
 
