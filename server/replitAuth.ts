@@ -51,7 +51,10 @@ function updateUserSession(
 ) {
   user.claims = tokens.claims();
   user.access_token = tokens.access_token;
-  user.refresh_token = tokens.refresh_token;
+  // Only update refresh_token if a new one is provided (refresh responses may not include it)
+  if (tokens.refresh_token) {
+    user.refresh_token = tokens.refresh_token;
+  }
   user.expires_at = user.claims?.exp;
 }
 

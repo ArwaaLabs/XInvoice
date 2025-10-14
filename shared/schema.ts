@@ -1,7 +1,8 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, decimal, integer, timestamp, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, decimal, integer, timestamp, jsonb, index, foreignKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 // Session storage table for Replit Auth
 export const sessions = pgTable(
@@ -27,7 +28,7 @@ export const users = pgTable("users", {
 
 export const clients = pgTable("clients", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   email: text("email").notNull(),
   address: text("address"),
@@ -37,9 +38,9 @@ export const clients = pgTable("clients", {
 
 export const invoices = pgTable("invoices", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   invoiceNumber: text("invoice_number").notNull().unique(),
-  clientId: varchar("client_id").notNull(),
+  clientId: varchar("client_id").notNull().references(() => clients.id, { onDelete: "restrict" }),
   issueDate: timestamp("issue_date").notNull(),
   dueDate: timestamp("due_date").notNull(),
   currency: text("currency").notNull().default("USD"),
@@ -53,7 +54,7 @@ export const invoices = pgTable("invoices", {
 
 export const lineItems = pgTable("line_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  invoiceId: varchar("invoice_id").notNull(),
+  invoiceId: varchar("invoice_id").notNull().references(() => invoices.id, { onDelete: "cascade" }),
   description: text("description").notNull(),
   quantity: integer("quantity").notNull(),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
@@ -64,6 +65,7 @@ export const lineItems = pgTable("line_items", {
 
 export const companySettings = pgTable("company_settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
   companyName: text("company_name").notNull(),
   email: text("email").notNull(),
   phone: text("phone"),
@@ -82,7 +84,7 @@ export const insertInvoiceSchema = createInsertSchema(invoices, {
   dueDate: z.coerce.date(),
 }).omit({ id: true });
 export const insertLineItemSchema = createInsertSchema(lineItems).omit({ id: true });
-export const insertCompanySettingsSchema = createInsertSchema(companySettings).omit({ id: true });
+export const insertCompanySettingsSchema = createInsertSchema(companySettings).omit({ id: true, userId: true });
 
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
 export type User = typeof users.$inferSelect;

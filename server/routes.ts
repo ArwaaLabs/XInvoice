@@ -209,25 +209,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Settings routes - protected but not user-specific
-  app.get("/api/settings", isAuthenticated, async (req, res) => {
+  // Settings routes - protected and user-specific
+  app.get("/api/settings", isAuthenticated, async (req: any, res) => {
     try {
-      const settings = await storage.getCompanySettings();
+      const userId = req.user.claims.sub;
+      const settings = await storage.getCompanySettings(userId);
       res.json(settings);
     } catch (error) {
+      console.error("Error fetching settings:", error);
       res.status(500).json({ error: "Failed to fetch settings" });
     }
   });
 
-  app.post("/api/settings", isAuthenticated, async (req, res) => {
+  app.post("/api/settings", isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
       const data = insertCompanySettingsSchema.parse(req.body);
-      const settings = await storage.createOrUpdateCompanySettings(data);
+      const settings = await storage.createOrUpdateCompanySettings(userId, data);
       res.json(settings);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
       }
+      console.error("Error updating settings:", error);
       res.status(500).json({ error: "Failed to update settings" });
     }
   });

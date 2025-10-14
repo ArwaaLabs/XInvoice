@@ -45,8 +45,8 @@ export interface IStorage {
   deleteLineItemsByInvoiceId(invoiceId: string): Promise<void>;
 
   // Company settings operations
-  getCompanySettings(): Promise<CompanySettings | undefined>;
-  createOrUpdateCompanySettings(settings: InsertCompanySettings): Promise<CompanySettings>;
+  getCompanySettings(userId: string): Promise<CompanySettings | undefined>;
+  createOrUpdateCompanySettings(userId: string, settings: InsertCompanySettings): Promise<CompanySettings>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -171,23 +171,30 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Company settings operations
-  async getCompanySettings(): Promise<CompanySettings | undefined> {
-    const [settings] = await db.select().from(companySettings).limit(1);
+  async getCompanySettings(userId: string): Promise<CompanySettings | undefined> {
+    const [settings] = await db
+      .select()
+      .from(companySettings)
+      .where(eq(companySettings.userId, userId))
+      .limit(1);
     return settings;
   }
 
-  async createOrUpdateCompanySettings(settings: InsertCompanySettings): Promise<CompanySettings> {
-    const existing = await this.getCompanySettings();
+  async createOrUpdateCompanySettings(userId: string, settings: InsertCompanySettings): Promise<CompanySettings> {
+    const existing = await this.getCompanySettings(userId);
     
     if (existing) {
       const [updated] = await db
         .update(companySettings)
         .set(settings)
-        .where(eq(companySettings.id, existing.id))
+        .where(eq(companySettings.userId, userId))
         .returning();
       return updated;
     } else {
-      const [created] = await db.insert(companySettings).values(settings).returning();
+      const [created] = await db
+        .insert(companySettings)
+        .values({ ...settings, userId })
+        .returning();
       return created;
     }
   }
