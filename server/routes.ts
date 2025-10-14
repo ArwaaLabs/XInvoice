@@ -28,6 +28,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const clients = await storage.getAllClients(userId);
       res.json(clients);
     } catch (error) {
+      console.error("Error fetching clients:", error);
       res.status(500).json({ error: "Failed to fetch clients" });
     }
   });
@@ -102,6 +103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       res.json(invoicesWithItems);
     } catch (error) {
+      console.error("Error fetching invoices:", error);
       res.status(500).json({ error: "Failed to fetch invoices" });
     }
   });
