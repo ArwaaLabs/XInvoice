@@ -21,6 +21,7 @@ type CompanySettings = {
   primaryColor: string | null;
   invoicePrefix: string | null;
   nextInvoiceNumber: number | null;
+  template: string | null;
 };
 
 export default function Settings() {
@@ -53,6 +54,7 @@ export default function Settings() {
       setPrimaryColor(settings.primaryColor || "#3B82F6");
       setInvoicePrefix(settings.invoicePrefix || "INV");
       setNextNumber(settings.nextInvoiceNumber || 1001);
+      setSelectedTemplate(settings.template || "modern");
     }
   }, [settings]);
 
@@ -105,8 +107,9 @@ export default function Settings() {
         taxId: taxId || null,
         logo: logo || null,
         primaryColor,
-        invoicePrefix: settings?.invoicePrefix || "INV",
-        nextInvoiceNumber: settings?.nextInvoiceNumber || 1001,
+        invoicePrefix,
+        nextInvoiceNumber: nextNumber,
+        template: selectedTemplate,
       });
       await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
       toast({
@@ -137,15 +140,16 @@ export default function Settings() {
     setIsSaving(true);
     try {
       await apiRequest("POST", "/api/settings", {
-        companyName: settings?.companyName || "",
-        email: settings?.email || "",
-        phone: settings?.phone,
-        address: settings?.address,
-        taxId: settings?.taxId,
-        logo: settings?.logo,
-        primaryColor: settings?.primaryColor || "#3B82F6",
+        companyName,
+        email,
+        phone: phone || null,
+        address: address || null,
+        taxId: taxId || null,
+        logo: logo || null,
+        primaryColor,
         invoicePrefix,
         nextInvoiceNumber: nextNumber,
+        template: selectedTemplate,
       });
       await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
       toast({

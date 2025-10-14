@@ -75,6 +75,7 @@ export const companySettings = pgTable("company_settings", {
   primaryColor: text("primary_color").default("#3B82F6"),
   invoicePrefix: text("invoice_prefix").default("INV"),
   nextInvoiceNumber: integer("next_invoice_number").default(1001),
+  template: text("template").default("modern"),
 });
 
 export const upsertUserSchema = createInsertSchema(users);
