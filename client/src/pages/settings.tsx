@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Upload, FileText } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Upload, FileText, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,8 +34,13 @@ export default function Settings() {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [taxId, setTaxId] = useState("");
+  const [logo, setLogo] = useState<string | null>(null);
+  const [primaryColor, setPrimaryColor] = useState("#3B82F6");
   const [invoicePrefix, setInvoicePrefix] = useState("");
   const [nextNumber, setNextNumber] = useState(1001);
+  const [selectedTemplate, setSelectedTemplate] = useState("modern");
+  const [isSaving, setIsSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (settings) {
@@ -44,19 +49,62 @@ export default function Settings() {
       setPhone(settings.phone || "");
       setAddress(settings.address || "");
       setTaxId(settings.taxId || "");
+      setLogo(settings.logo);
+      setPrimaryColor(settings.primaryColor || "#3B82F6");
       setInvoicePrefix(settings.invoicePrefix || "INV");
       setNextNumber(settings.nextInvoiceNumber || 1001);
     }
   }, [settings]);
 
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file",
+        description: "Please upload an image file (PNG or JPG).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 2MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setLogo(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSaveCompany = async () => {
+    if (!companyName || !email) {
+      toast({
+        title: "Missing information",
+        description: "Company name and email are required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
     try {
       await apiRequest("POST", "/api/settings", {
         companyName,
         email,
-        phone,
-        address,
-        taxId,
+        phone: phone || null,
+        address: address || null,
+        taxId: taxId || null,
+        logo: logo || null,
+        primaryColor,
         invoicePrefix: settings?.invoicePrefix || "INV",
         nextInvoiceNumber: settings?.nextInvoiceNumber || 1001,
       });
@@ -71,10 +119,22 @@ export default function Settings() {
         description: "Failed to save settings.",
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleSaveInvoice = async () => {
+    if (!invoicePrefix) {
+      toast({
+        title: "Missing information",
+        description: "Invoice prefix is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
     try {
       await apiRequest("POST", "/api/settings", {
         companyName: settings?.companyName || "",
@@ -82,6 +142,8 @@ export default function Settings() {
         phone: settings?.phone,
         address: settings?.address,
         taxId: settings?.taxId,
+        logo: settings?.logo,
+        primaryColor: settings?.primaryColor || "#3B82F6",
         invoicePrefix,
         nextInvoiceNumber: nextNumber,
       });
@@ -96,6 +158,8 @@ export default function Settings() {
         description: "Failed to save settings.",
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -136,16 +200,44 @@ export default function Settings() {
                 <div>
                   <Label htmlFor="logo">Company Logo</Label>
                   <div className="mt-2 flex items-center gap-4">
-                    <div className="flex h-24 w-24 items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted">
-                      <FileText className="h-8 w-8 text-muted-foreground" />
+                    <div className="flex h-24 w-24 items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted overflow-hidden">
+                      {logo ? (
+                        <img src={logo} alt="Company logo" className="h-full w-full object-contain" />
+                      ) : (
+                        <FileText className="h-8 w-8 text-muted-foreground" />
+                      )}
                     </div>
-                    <Button variant="outline" data-testid="button-upload-logo">
-                      <Upload className="mr-2 h-4 w-4" />
-                      Upload Logo
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleLogoUpload}
+                        accept="image/png,image/jpeg,image/jpg"
+                        className="hidden"
+                        data-testid="input-logo-file"
+                      />
+                      <Button 
+                        variant="outline" 
+                        onClick={() => fileInputRef.current?.click()}
+                        data-testid="button-upload-logo"
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload Logo
+                      </Button>
+                      {logo && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => setLogo(null)}
+                          data-testid="button-remove-logo"
+                        >
+                          Remove Logo
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Recommended size: 200x200px. PNG or JPG format.
+                    Recommended size: 200x200px. PNG or JPG format. Max 2MB.
                   </p>
                 </div>
 
@@ -203,9 +295,35 @@ export default function Settings() {
                     data-testid="input-company-address"
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="primaryColor">Brand Color</Label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      id="primaryColor"
+                      value={primaryColor}
+                      onChange={(e) => setPrimaryColor(e.target.value)}
+                      className="h-10 w-20 rounded-md border border-input cursor-pointer"
+                      data-testid="input-primary-color"
+                    />
+                    <Input
+                      value={primaryColor}
+                      onChange={(e) => setPrimaryColor(e.target.value)}
+                      placeholder="#3B82F6"
+                      className="flex-1"
+                      data-testid="input-color-hex"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    This color will be used for branding elements on your invoices
+                  </p>
+                </div>
               </div>
 
-              <Button onClick={handleSaveCompany} data-testid="button-save-company">Save Changes</Button>
+              <Button onClick={handleSaveCompany} disabled={isSaving} data-testid="button-save-company">
+                {isSaving ? "Saving..." : "Save Changes"}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -248,29 +366,64 @@ export default function Settings() {
                 </div>
               </div>
 
-              <Button onClick={handleSaveInvoice} data-testid="button-save-invoice-settings">Save Changes</Button>
+              <Button onClick={handleSaveInvoice} disabled={isSaving} data-testid="button-save-invoice-settings">
+                {isSaving ? "Saving..." : "Save Changes"}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="templates" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {["Modern", "Classic", "Minimal"].map((template) => (
-              <Card key={template} className="hover-elevate cursor-pointer">
-                <CardHeader>
-                  <CardTitle className="text-lg">{template}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="aspect-[3/4] bg-muted rounded-md flex items-center justify-center">
-                    <FileText className="h-12 w-12 text-muted-foreground" />
-                  </div>
-                  <Button className="w-full mt-4" variant="outline" data-testid={`button-select-${template.toLowerCase()}`}>
-                    Select Template
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Invoice Template</CardTitle>
+              <CardDescription>
+                Choose a template design for your invoices
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {["modern", "classic", "minimal"].map((template) => {
+                  const isSelected = selectedTemplate === template;
+                  return (
+                    <Card 
+                      key={template} 
+                      className={`hover-elevate cursor-pointer relative ${isSelected ? 'ring-2 ring-primary' : ''}`}
+                      onClick={() => setSelectedTemplate(template)}
+                      data-testid={`card-template-${template}`}
+                    >
+                      {isSelected && (
+                        <div className="absolute top-2 right-2 h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                          <Check className="h-4 w-4" />
+                        </div>
+                      )}
+                      <CardHeader>
+                        <CardTitle className="text-lg capitalize">{template}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="aspect-[3/4] bg-muted rounded-md flex items-center justify-center border">
+                          <FileText className="h-12 w-12 text-muted-foreground" />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-3 text-center">
+                          {template === "modern" && "Clean and professional design with bold headers"}
+                          {template === "classic" && "Traditional layout with elegant typography"}
+                          {template === "minimal" && "Simple and straightforward invoice format"}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+              <div className="mt-6">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Selected template: <span className="font-medium capitalize">{selectedTemplate}</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Note: Template selection is saved automatically when you update company or invoice settings.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
