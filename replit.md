@@ -2,11 +2,15 @@
 
 ## Overview
 
-A professional invoice generation web application built with React, Express, and in-memory storage. The system enables users to create, manage, and export invoices with multi-currency support, customizable branding, and PDF generation capabilities. The application follows a Linear-inspired minimalist design approach with Stripe's dashboard sophistication, emphasizing clarity and professionalism.
+A professional invoice generation web application built with React, Express, and PostgreSQL. The system enables users to create, manage, and export invoices with multi-currency support, customizable branding, and PDF generation capabilities. Features Google authentication via Replit Auth for secure user access. The application follows a Linear-inspired minimalist design approach with Stripe's dashboard sophistication, emphasizing clarity and professionalism.
 
-**Latest Updates (October 2025)**
-- ✅ Full backend API integration with in-memory storage
-- ✅ Complete CRUD operations for clients, invoices, and company settings
+**Latest Updates (October 14, 2025)**
+- ✅ **Google Authentication**: Implemented Replit Auth with OpenID Connect (supports Google, GitHub, email/password)
+- ✅ **PostgreSQL Database**: Migrated from in-memory to PostgreSQL with Drizzle ORM for persistent storage
+- ✅ **User Data Isolation**: All clients, invoices, and settings are user-specific with foreign key constraints
+- ✅ **Session Management**: PostgreSQL-backed sessions with automatic token refresh
+- ✅ **Landing Page**: Professional landing page for unauthenticated users with login flow
+- ✅ **Protected Routes**: All API endpoints require authentication with isAuthenticated middleware
 - ✅ Multi-currency support with proper currency grouping and display
 - ✅ PDF generation for invoice downloads
 - ✅ Professional dashboard with real-time metrics
@@ -57,15 +61,31 @@ Preferred communication style: Simple, everyday language.
 
 **Storage Layer**
 - Abstract IStorage interface defining data access contracts
-- In-memory storage implementation (MemStorage) for development/testing
-- Designed for easy migration to PostgreSQL via Drizzle ORM
+- DatabaseStorage implementation using PostgreSQL via Drizzle ORM
+- All data operations scoped by userId for multi-tenant isolation
 - UUID-based primary keys for distributed system compatibility
 
+**Authentication System**
+- Replit Auth with OpenID Connect protocol
+- Support for multiple providers: Google, GitHub, email/password
+- PostgreSQL-backed session storage with connect-pg-simple
+- Token refresh handling with automatic session renewal
+- Middleware-based route protection (isAuthenticated)
+
 **Database Schema (Drizzle ORM)**
-- `clients` table: Customer information with contact details and tax ID
-- `invoices` table: Invoice metadata including status, dates, currency, tax/discount configuration
-- `line_items` table: Individual invoice items with quantity, pricing, and item-level tax/discount
-- `company_settings` table: Singleton for branding, contact info, and invoice numbering
+- `users` table: User profiles from OAuth (id, email, firstName, lastName, profileImageUrl)
+- `sessions` table: Session storage for authentication state
+- `clients` table: Customer information with contact details and tax ID (linked to userId)
+- `invoices` table: Invoice metadata including status, dates, currency, tax/discount (linked to userId and clientId)
+- `line_items` table: Individual invoice items with quantity, pricing (linked to invoiceId)
+- `company_settings` table: Per-user branding, contact info, and invoice numbering (linked to userId)
+
+**Foreign Key Constraints**
+- `clients.userId` → `users.id` (cascade delete)
+- `invoices.userId` → `users.id` (cascade delete)
+- `invoices.clientId` → `clients.id` (restrict delete to prevent orphaned invoices)
+- `line_items.invoiceId` → `invoices.id` (cascade delete)
+- `company_settings.userId` → `users.id` (cascade delete, unique per user)
 
 ### External Dependencies
 
@@ -89,9 +109,11 @@ Preferred communication style: Simple, everyday language.
 - esbuild for production server bundling
 - Replit-specific plugins for development environment integration (cartographer, dev-banner, runtime-error-modal)
 
-**Session Management**
+**Authentication Dependencies**
+- passport for authentication middleware
+- openid-client for OAuth/OpenID Connect protocol
 - connect-pg-simple for PostgreSQL-backed session storage
-- Designed for future authentication integration
+- memoizee for OIDC configuration caching
 
 ### Key Architectural Decisions
 
@@ -106,9 +128,17 @@ Preferred communication style: Simple, everyday language.
 - Drizzle-Zod integration for automatic type inference from database
 
 **Separation of Concerns**
-- Storage abstraction allows swapping implementations without changing business logic
+- Storage abstraction with user-scoped data access
 - Component composition with shadcn/ui for maintainable UI code
 - API client abstraction with centralized error handling
+- Authentication state management via useAuth hook
+
+**Security Architecture**
+- All API routes protected with isAuthenticated middleware
+- JWT-based authentication with automatic token refresh
+- Session cookies with httpOnly and secure flags
+- User data isolation enforced at database level with foreign keys
+- CSRF protection via session management
 
 **Performance Optimizations**
 - React Query for intelligent caching and background refetching
