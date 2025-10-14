@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { CalendarIcon, Save, Download, Send } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { CalendarIcon, Save, Download, Send, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { LineItemsTable, type LineItem } from "@/components/line-items-table";
 import { InvoicePreview } from "@/components/invoice-preview";
@@ -23,7 +24,9 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 
 const currencies = [
   { code: "USD", symbol: "$" },
@@ -32,21 +35,28 @@ const currencies = [
   { code: "JPY", symbol: "¥" },
 ];
 
+type CompanySettings = {
+  id: string;
+  companyName: string;
+  email: string;
+  phone: string | null;
+  address: string | null;
+  logo: string | null;
+  invoicePrefix: string | null;
+  nextInvoiceNumber: number | null;
+};
+
 export default function InvoiceEditor() {
-  const [clients, setClients] = useState<Client[]>([
-    {
-      id: "1",
-      name: "Tech Corp",
-      email: "contact@techcorp.com",
-      address: "456 Business Blvd, New York, NY 10001",
-    },
-    {
-      id: "2",
-      name: "Design Agency",
-      email: "hello@designagency.com",
-      address: "789 Creative Lane, Los Angeles, CA 90001",
-    },
-  ]);
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+
+  const { data: clients = [], isLoading: clientsLoading } = useQuery<Client[]>({
+    queryKey: ["/api/clients"],
+  });
+
+  const { data: settings } = useQuery<CompanySettings>({
+    queryKey: ["/api/settings"],
+  });
 
   const [selectedClient, setSelectedClient] = useState<string>();
   const [issueDate, setIssueDate] = useState<Date>(new Date());
@@ -54,49 +64,131 @@ export default function InvoiceEditor() {
     new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
   );
   const [currency, setCurrency] = useState("USD");
+  const [status, setStatus] = useState<"draft" | "sent" | "paid" | "overdue">("draft");
   const [notes, setNotes] = useState("Payment is due within 30 days. Thank you for your business!");
   const [items, setItems] = useState<LineItem[]>([
     {
       id: "1",
-      description: "Web Development Services",
-      quantity: 40,
-      unitPrice: 85,
-      discount: 10,
+      description: "",
+      quantity: 1,
+      unitPrice: 0,
+      discount: 0,
       discountType: "percentage",
-      taxRate: 8,
+      taxRate: 0,
     },
   ]);
 
-  const handleAddClient = (newClient: Omit<Client, "id">) => {
-    const client: Client = {
-      ...newClient,
-      id: Math.random().toString(36).substr(2, 9),
-    };
-    setClients([...clients, client]);
-    setSelectedClient(client.id);
+  const handleAddClient = async (newClient: Omit<Client, "id">) => {
+    try {
+      const response = await apiRequest("POST", "/api/clients", newClient);
+      const client = await response.json();
+      await queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      setSelectedClient(client.id);
+      toast({
+        title: "Client added",
+        description: "New client has been successfully added.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add client.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSave = async (saveStatus: "draft" | "sent" = "draft") => {
+    if (!selectedClient) {
+      toast({
+        title: "Client required",
+        description: "Please select a client for this invoice.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const invoiceNumber = `${settings?.invoicePrefix || "INV"}-${settings?.nextInvoiceNumber || 1001}`;
+
+    try {
+      const invoiceData = {
+        invoiceNumber,
+        clientId: selectedClient,
+        issueDate: issueDate.toISOString(),
+        dueDate: dueDate.toISOString(),
+        currency,
+        status: saveStatus,
+        notes,
+        items: items.map(item => ({
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice.toString(),
+          discount: item.discount.toString(),
+          discountType: item.discountType,
+          taxRate: item.taxRate.toString(),
+        })),
+      };
+
+      await apiRequest("POST", "/api/invoices", invoiceData);
+
+      if (settings) {
+        await apiRequest("POST", "/api/settings", {
+          ...settings,
+          nextInvoiceNumber: (settings.nextInvoiceNumber || 1001) + 1,
+        });
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+
+      toast({
+        title: saveStatus === "draft" ? "Draft saved" : "Invoice sent",
+        description: `Invoice ${invoiceNumber} has been ${saveStatus === "draft" ? "saved as draft" : "sent to client"}.`,
+      });
+
+      setLocation("/invoices");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save invoice.",
+        variant: "destructive",
+      });
+    }
   };
 
   const selectedClientData = clients.find((c) => c.id === selectedClient);
-  const currencySymbol =
-    currencies.find((c) => c.code === currency)?.symbol || "$";
+  const currencySymbol = currencies.find((c) => c.code === currency)?.symbol || "$";
 
   const previewData = {
-    invoiceNumber: "INV-1001",
+    invoiceNumber: `${settings?.invoicePrefix || "INV"}-${settings?.nextInvoiceNumber || 1001}`,
     issueDate,
     dueDate,
-    status: "draft" as const,
+    status,
     company: {
-      name: "Design Studio Inc.",
-      email: "hello@designstudio.com",
-      phone: "+1 (555) 123-4567",
-      address: "123 Creative Ave, San Francisco, CA 94102",
+      name: settings?.companyName || "Your Company",
+      email: settings?.email || "email@company.com",
+      phone: settings?.phone || "+1 (555) 000-0000",
+      address: settings?.address || "123 Business St, City, State 12345",
+      logo: settings?.logo || undefined,
     },
-    client: selectedClientData || {
-      name: "Select a client",
-      email: "",
-      address: "",
-    },
-    items,
+    client: selectedClientData
+      ? {
+          name: selectedClientData.name,
+          email: selectedClientData.email,
+          address: selectedClientData.address || "",
+        }
+      : {
+          name: "Select a client",
+          email: "",
+          address: "",
+        },
+    items: items.map(item => ({
+      description: item.description,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      discount: item.discount,
+      discountType: item.discountType as "percentage" | "fixed",
+      taxRate: item.taxRate,
+    })),
     currency: currencySymbol,
     notes,
   };
@@ -104,22 +196,28 @@ export default function InvoiceEditor() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold">Create Invoice</h1>
-          <p className="text-muted-foreground mt-1">
-            Fill in the details to generate a new invoice
-          </p>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setLocation("/invoices")}
+            data-testid="button-back"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-semibold">Create Invoice</h1>
+            <p className="text-muted-foreground mt-1">
+              Fill in the details to generate a new invoice
+            </p>
+          </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" data-testid="button-save-draft">
+          <Button variant="outline" onClick={() => handleSave("draft")} data-testid="button-save-draft">
             <Save className="mr-2 h-4 w-4" />
             Save Draft
           </Button>
-          <Button variant="outline" data-testid="button-download-pdf">
-            <Download className="mr-2 h-4 w-4" />
-            Download PDF
-          </Button>
-          <Button data-testid="button-send-invoice">
+          <Button onClick={() => handleSave("sent")} data-testid="button-send-invoice">
             <Send className="mr-2 h-4 w-4" />
             Send Invoice
           </Button>
@@ -135,12 +233,16 @@ export default function InvoiceEditor() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="client">Client</Label>
-                <ClientSelector
-                  clients={clients}
-                  value={selectedClient}
-                  onSelect={setSelectedClient}
-                  onAddClient={handleAddClient}
-                />
+                {clientsLoading ? (
+                  <div className="text-sm text-muted-foreground">Loading clients...</div>
+                ) : (
+                  <ClientSelector
+                    clients={clients}
+                    value={selectedClient}
+                    onSelect={setSelectedClient}
+                    onAddClient={handleAddClient}
+                  />
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">

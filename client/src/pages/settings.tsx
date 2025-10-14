@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Upload, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,14 +7,105 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+
+type CompanySettings = {
+  id: string;
+  companyName: string;
+  email: string;
+  phone: string | null;
+  address: string | null;
+  taxId: string | null;
+  logo: string | null;
+  primaryColor: string | null;
+  invoicePrefix: string | null;
+  nextInvoiceNumber: number | null;
+};
 
 export default function Settings() {
-  const [companyName, setCompanyName] = useState("Design Studio Inc.");
-  const [email, setEmail] = useState("hello@designstudio.com");
-  const [phone, setPhone] = useState("+1 (555) 123-4567");
-  const [address, setAddress] = useState("123 Creative Ave, San Francisco, CA 94102");
-  const [invoicePrefix, setInvoicePrefix] = useState("INV");
+  const { toast } = useToast();
+  const { data: settings, isLoading } = useQuery<CompanySettings>({
+    queryKey: ["/api/settings"],
+  });
+
+  const [companyName, setCompanyName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [taxId, setTaxId] = useState("");
+  const [invoicePrefix, setInvoicePrefix] = useState("");
   const [nextNumber, setNextNumber] = useState(1001);
+
+  useEffect(() => {
+    if (settings) {
+      setCompanyName(settings.companyName);
+      setEmail(settings.email);
+      setPhone(settings.phone || "");
+      setAddress(settings.address || "");
+      setTaxId(settings.taxId || "");
+      setInvoicePrefix(settings.invoicePrefix || "INV");
+      setNextNumber(settings.nextInvoiceNumber || 1001);
+    }
+  }, [settings]);
+
+  const handleSaveCompany = async () => {
+    try {
+      await apiRequest("POST", "/api/settings", {
+        companyName,
+        email,
+        phone,
+        address,
+        taxId,
+        invoicePrefix: settings?.invoicePrefix || "INV",
+        nextInvoiceNumber: settings?.nextInvoiceNumber || 1001,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      toast({
+        title: "Settings saved",
+        description: "Company information has been successfully updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save settings.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveInvoice = async () => {
+    try {
+      await apiRequest("POST", "/api/settings", {
+        companyName: settings?.companyName || "",
+        email: settings?.email || "",
+        phone: settings?.phone,
+        address: settings?.address,
+        taxId: settings?.taxId,
+        invoicePrefix,
+        nextInvoiceNumber: nextNumber,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      toast({
+        title: "Settings saved",
+        description: "Invoice settings have been successfully updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save settings.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="h-48 flex items-center justify-center text-muted-foreground">
+        Loading settings...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -91,7 +183,13 @@ export default function Settings() {
 
                   <div className="space-y-2">
                     <Label htmlFor="taxId">Tax ID (Optional)</Label>
-                    <Input id="taxId" placeholder="XX-XXXXXXX" data-testid="input-tax-id" />
+                    <Input
+                      id="taxId"
+                      placeholder="XX-XXXXXXX"
+                      value={taxId}
+                      onChange={(e) => setTaxId(e.target.value)}
+                      data-testid="input-tax-id"
+                    />
                   </div>
                 </div>
 
@@ -107,7 +205,7 @@ export default function Settings() {
                 </div>
               </div>
 
-              <Button data-testid="button-save-company">Save Changes</Button>
+              <Button onClick={handleSaveCompany} data-testid="button-save-company">Save Changes</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -141,7 +239,7 @@ export default function Settings() {
                     id="nextNumber"
                     type="number"
                     value={nextNumber}
-                    onChange={(e) => setNextNumber(parseInt(e.target.value))}
+                    onChange={(e) => setNextNumber(parseInt(e.target.value) || 1001)}
                     data-testid="input-next-number"
                   />
                   <p className="text-xs text-muted-foreground">
@@ -150,7 +248,7 @@ export default function Settings() {
                 </div>
               </div>
 
-              <Button data-testid="button-save-invoice-settings">Save Changes</Button>
+              <Button onClick={handleSaveInvoice} data-testid="button-save-invoice-settings">Save Changes</Button>
             </CardContent>
           </Card>
         </TabsContent>

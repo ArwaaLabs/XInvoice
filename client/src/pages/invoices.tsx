@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Search, Filter, Plus } from "lucide-react";
 import { InvoiceListTable, type InvoiceListItem } from "@/components/invoice-list-table";
 import { Input } from "@/components/ui/input";
@@ -10,60 +11,83 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { generateInvoicePDF } from "@/lib/pdf-generator";
+
+type Invoice = {
+  id: string;
+  invoiceNumber: string;
+  clientId: string;
+  issueDate: string;
+  dueDate: string;
+  status: string;
+  currency: string;
+  notes?: string | null;
+  items: Array<{
+    description: string;
+    quantity: number;
+    unitPrice: string;
+    discount: string;
+    discountType: string;
+    taxRate: string;
+  }>;
+};
+
+type Client = {
+  id: string;
+  name: string;
+  email: string;
+  address?: string | null;
+};
 
 export default function Invoices() {
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const [invoices] = useState<InvoiceListItem[]>([
-    {
-      id: "1",
-      invoiceNumber: "INV-1001",
-      clientName: "Tech Corp",
-      issueDate: new Date("2025-10-01"),
-      dueDate: new Date("2025-10-31"),
-      amount: 3456.78,
-      status: "paid",
-    },
-    {
-      id: "2",
-      invoiceNumber: "INV-1002",
-      clientName: "Design Agency",
-      issueDate: new Date("2025-10-05"),
-      dueDate: new Date("2025-11-05"),
-      amount: 1234.56,
-      status: "sent",
-    },
-    {
-      id: "3",
-      invoiceNumber: "INV-1003",
-      clientName: "Startup Inc",
-      issueDate: new Date("2025-10-10"),
-      dueDate: new Date("2025-09-15"),
-      amount: 890.00,
-      status: "overdue",
-    },
-    {
-      id: "4",
-      invoiceNumber: "INV-1004",
-      clientName: "Marketing Co",
-      issueDate: new Date("2025-10-08"),
-      dueDate: new Date("2025-11-08"),
-      amount: 2100.00,
-      status: "draft",
-    },
-    {
-      id: "5",
-      invoiceNumber: "INV-1005",
-      clientName: "Consulting Group",
-      issueDate: new Date("2025-10-12"),
-      dueDate: new Date("2025-11-12"),
-      amount: 5670.00,
-      status: "sent",
-    },
-  ]);
+  const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
+    queryKey: ["/api/invoices"],
+  });
 
-  const filteredInvoices = invoices.filter((invoice) => {
+  const { data: clients = [] } = useQuery<Client[]>({
+    queryKey: ["/api/clients"],
+  });
+
+  const calculateInvoiceTotal = (invoice: Invoice) => {
+    return invoice.items.reduce((sum, item) => {
+      const subtotal = item.quantity * parseFloat(item.unitPrice);
+      let discountAmount = 0;
+      if (item.discountType === "percentage") {
+        discountAmount = (subtotal * parseFloat(item.discount)) / 100;
+      } else {
+        discountAmount = parseFloat(item.discount);
+      }
+      const afterDiscount = subtotal - discountAmount;
+      const taxAmount = (afterDiscount * parseFloat(item.taxRate)) / 100;
+      return sum + afterDiscount + taxAmount;
+    }, 0);
+  };
+
+  const getClientName = (clientId: string) => {
+    const client = clients.find(c => c.id === clientId);
+    return client?.name || "Unknown Client";
+  };
+
+  const invoiceListItems: InvoiceListItem[] = invoices.map((invoice) => ({
+    id: invoice.id,
+    invoiceNumber: invoice.invoiceNumber,
+    clientName: getClientName(invoice.clientId),
+    issueDate: new Date(invoice.issueDate),
+    dueDate: new Date(invoice.dueDate),
+    amount: calculateInvoiceTotal(invoice),
+    status: invoice.status as any,
+    currency: invoice.currency,
+  }));
+
+  const filteredInvoices = invoiceListItems.filter((invoice) => {
     const matchesSearch =
       invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.clientName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -71,6 +95,78 @@ export default function Invoices() {
       statusFilter === "all" || invoice.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const handleDelete = async (id: string) => {
+    try {
+      await apiRequest("DELETE", `/api/invoices/${id}`);
+      await queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      toast({
+        title: "Invoice deleted",
+        description: "The invoice has been successfully deleted.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete invoice.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSend = async (id: string) => {
+    try {
+      await apiRequest("PATCH", `/api/invoices/${id}`, { status: "sent" });
+      await queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      toast({
+        title: "Invoice sent",
+        description: "The invoice has been sent to the client.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send invoice.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownload = async (id: string) => {
+    const invoice = invoices.find(inv => inv.id === id);
+    if (!invoice) return;
+
+    const client = clients.find(c => c.id === invoice.clientId);
+    const settings = await queryClient.fetchQuery({ queryKey: ["/api/settings"] }) as any;
+
+    const pdfData = {
+      invoiceNumber: invoice.invoiceNumber,
+      issueDate: new Date(invoice.issueDate),
+      dueDate: new Date(invoice.dueDate),
+      status: invoice.status,
+      company: {
+        name: settings?.companyName || "Your Company",
+        email: settings?.email || "email@company.com",
+        phone: settings?.phone || "+1 (555) 000-0000",
+        address: settings?.address || "123 Business St, City, State 12345",
+      },
+      client: {
+        name: client?.name || "Unknown Client",
+        email: client?.email || "",
+        address: client?.address || "",
+      },
+      items: invoice.items.map(item => ({
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: parseFloat(item.unitPrice),
+        discount: parseFloat(item.discount),
+        discountType: item.discountType as "percentage" | "fixed",
+        taxRate: parseFloat(item.taxRate),
+      })),
+      currency: invoice.currency === "USD" ? "$" : invoice.currency,
+      notes: invoice.notes || undefined,
+    };
+
+    generateInvoicePDF(pdfData);
+  };
 
   return (
     <div className="space-y-6">
@@ -81,7 +177,7 @@ export default function Invoices() {
             Manage all your invoices in one place
           </p>
         </div>
-        <Button data-testid="button-new-invoice">
+        <Button onClick={() => setLocation("/invoice/new")} data-testid="button-new-invoice">
           <Plus className="mr-2 h-4 w-4" />
           New Invoice
         </Button>
@@ -115,14 +211,19 @@ export default function Invoices() {
         </Select>
       </div>
 
-      <InvoiceListTable
-        invoices={filteredInvoices}
-        currency="$"
-        onView={(id) => console.log("View invoice", id)}
-        onDownload={(id) => console.log("Download invoice", id)}
-        onSend={(id) => console.log("Send invoice", id)}
-        onDelete={(id) => console.log("Delete invoice", id)}
-      />
+      {isLoading ? (
+        <div className="h-48 flex items-center justify-center text-muted-foreground">
+          Loading invoices...
+        </div>
+      ) : (
+        <InvoiceListTable
+          invoices={filteredInvoices}
+          onView={(id) => setLocation(`/invoice/${id}`)}
+          onDownload={handleDownload}
+          onSend={handleSend}
+          onDelete={handleDelete}
+        />
+      )}
     </div>
   );
 }

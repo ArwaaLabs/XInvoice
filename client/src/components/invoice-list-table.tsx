@@ -27,6 +27,7 @@ export type InvoiceListItem = {
   dueDate: Date;
   amount: number;
   status: "draft" | "sent" | "paid" | "overdue";
+  currency?: string;
 };
 
 type InvoiceListTableProps = {
@@ -40,7 +41,7 @@ type InvoiceListTableProps = {
 
 export function InvoiceListTable({
   invoices,
-  currency = "$",
+  currency,
   onView,
   onDownload,
   onSend,
@@ -93,7 +94,14 @@ export function InvoiceListTable({
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right font-mono font-medium">
-                  {currency}{invoice.amount.toFixed(2)}
+                  {invoice.currency ? (
+                    <>
+                      {invoice.currency === "USD" ? "$" : invoice.currency === "EUR" ? "€" : invoice.currency === "GBP" ? "£" : invoice.currency === "JPY" ? "¥" : invoice.currency}
+                      {invoice.amount.toFixed(2)}
+                    </>
+                  ) : (
+                    <>{currency}{invoice.amount.toFixed(2)}</>
+                  )}
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
