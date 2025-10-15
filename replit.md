@@ -16,6 +16,8 @@ A professional invoice generation web application built with React, Express, and
 - ✅ **Protected Routes**: All API endpoints require authentication with isAuthenticated middleware
 - ✅ **Account Information**: Indian banking details (Bank Name, Account Number, IFSC Code, SWIFT Code) in company settings
 - ✅ **Logo Display**: Company logo displays on invoice preview and PDF exports (PNG/JPEG support)
+- ✅ **Invoice Templates**: Three distinct template styles (Modern, Classic, Minimal) for both preview and PDF generation
+- ✅ **Type Safety**: End-to-end type safety using CompanySettings from shared schema throughout template flow
 - ✅ Multi-currency support with proper currency grouping and display
 - ✅ PDF generation with logo embedding and format auto-detection
 - ✅ Professional dashboard with real-time metrics
