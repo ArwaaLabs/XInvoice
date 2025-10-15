@@ -8,6 +8,7 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { generateInvoicePDF } from "@/lib/pdf-generator";
+import { type CompanySettings } from "@shared/schema";
 
 type Invoice = {
   id: string;
@@ -143,7 +144,7 @@ export default function Dashboard() {
     if (!invoice) return;
 
     const client = clients.find(c => c.id === invoice.clientId);
-    const settings = await queryClient.fetchQuery({ queryKey: ["/api/settings"] }) as any;
+    const settings = await queryClient.fetchQuery<CompanySettings>({ queryKey: ["/api/settings"] });
 
     const pdfData = {
       invoiceNumber: invoice.invoiceNumber,

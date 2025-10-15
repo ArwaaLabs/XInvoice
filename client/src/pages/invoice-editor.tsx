@@ -27,6 +27,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
+import { type CompanySettings } from "@shared/schema";
 
 const currencies = [
   { code: "USD", symbol: "$" },
@@ -34,17 +35,6 @@ const currencies = [
   { code: "GBP", symbol: "£" },
   { code: "JPY", symbol: "¥" },
 ];
-
-type CompanySettings = {
-  id: string;
-  companyName: string;
-  email: string;
-  phone: string | null;
-  address: string | null;
-  logo: string | null;
-  invoicePrefix: string | null;
-  nextInvoiceNumber: number | null;
-};
 
 export default function InvoiceEditor() {
   const [, setLocation] = useLocation();
@@ -163,8 +153,8 @@ export default function InvoiceEditor() {
     issueDate,
     dueDate,
     status,
-    template: (settings as any)?.template as "modern" | "classic" | "minimal" | undefined,
-    primaryColor: (settings as any)?.primaryColor,
+    template: settings?.template as "modern" | "classic" | "minimal" | undefined,
+    primaryColor: settings?.primaryColor,
     company: {
       name: settings?.companyName || "Your Company",
       email: settings?.email || "email@company.com",
