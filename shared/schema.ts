@@ -78,8 +78,7 @@ export const companySettings = pgTable("company_settings", {
   template: text("template").default("modern"),
   bankName: text("bank_name"),
   accountNumber: text("account_number"),
-  routingNumber: text("routing_number"),
-  iban: text("iban"),
+  ifscCode: text("ifsc_code"),
   swiftCode: text("swift_code"),
 });
 
