@@ -14,10 +14,12 @@ A professional invoice generation web application built with React, Express, and
 - ✅ **Session Management**: PostgreSQL-backed sessions with 30-day expiration
 - ✅ **Landing Page**: Professional landing page with three OAuth provider buttons
 - ✅ **Protected Routes**: All API endpoints require authentication with isAuthenticated middleware
+- ✅ **Account Information**: Bank details (bank name, account number, routing number, IBAN, SWIFT) in company settings
+- ✅ **Logo Display**: Company logo displays on invoice preview and PDF exports (PNG/JPEG support)
 - ✅ Multi-currency support with proper currency grouping and display
-- ✅ PDF generation for invoice downloads
+- ✅ PDF generation with logo embedding and format auto-detection
 - ✅ Professional dashboard with real-time metrics
-- ✅ Settings page with template persistence, logo upload, and color picker
+- ✅ Settings page with template persistence, logo upload, color picker, and account information
 
 ## User Preferences
 
