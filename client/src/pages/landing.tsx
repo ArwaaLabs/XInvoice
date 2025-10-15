@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, DollarSign, Users, Settings, Globe } from "lucide-react";
+import { FileText, DollarSign, Users, Settings } from "lucide-react";
+import { SiGoogle, SiGithub, SiLinkedin } from "react-icons/si";
 
 export default function Landing() {
   return (
@@ -21,14 +22,39 @@ export default function Landing() {
             Professional invoice generation made simple. Create beautiful invoices with multi-currency support, tax calculations, and PDF export.
           </p>
 
-          <div className="flex gap-4 mt-8">
-            <Button
-              size="lg"
-              onClick={() => window.location.href = "/api/login"}
-              data-testid="button-login"
-            >
-              Sign In with Google
-            </Button>
+          <div className="flex flex-col items-center gap-3 mt-8">
+            <p className="text-sm text-muted-foreground mb-2">Sign in with your preferred account</p>
+            <div className="flex flex-wrap gap-3 justify-center">
+              <Button
+                size="lg"
+                onClick={() => window.location.href = "/api/login?provider=google"}
+                data-testid="button-login-google"
+                className="gap-2"
+              >
+                <SiGoogle className="h-5 w-5" />
+                Google
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => window.location.href = "/api/login?provider=github"}
+                data-testid="button-login-github"
+                className="gap-2"
+              >
+                <SiGithub className="h-5 w-5" />
+                GitHub
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => window.location.href = "/api/login/linkedin"}
+                data-testid="button-login-linkedin"
+                className="gap-2"
+              >
+                <SiLinkedin className="h-5 w-5" />
+                LinkedIn
+              </Button>
+            </div>
           </div>
         </div>
 

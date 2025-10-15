@@ -1,6 +1,7 @@
 // Replit Auth integration - supports Google, GitHub, email/password, and more
 import * as client from "openid-client";
 import { Strategy, type VerifyFunction } from "openid-client/passport";
+import { Strategy as LinkedInStrategy } from "passport-linkedin-oauth2";
 
 import passport from "passport";
 import session from "express-session";
@@ -118,14 +119,62 @@ export async function setupAuth(app: Express) {
     passport.use(strategy);
   }
 
+  // LinkedIn OAuth Strategy (if credentials are provided)
+  if (process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET) {
+    const linkedInVerify: any = async (
+      accessToken: string,
+      refreshToken: string,
+      profile: any,
+      done: any
+    ) => {
+      try {
+        const user = {
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          claims: {
+            sub: `linkedin:${profile.id}`,
+            email: profile.emails?.[0]?.value || "",
+            first_name: profile.name?.givenName || "",
+            last_name: profile.name?.familyName || "",
+            profile_image_url: profile.photos?.[0]?.value || "",
+          },
+        };
+        
+        await upsertUser(user.claims);
+        done(null, user);
+      } catch (error) {
+        done(error, null);
+      }
+    };
+
+    passport.use(
+      new LinkedInStrategy(
+        {
+          clientID: process.env.LINKEDIN_CLIENT_ID,
+          clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
+          callbackURL: `https://${process.env.REPLIT_DOMAINS!.split(",")[0]}/api/callback/linkedin`,
+          scope: ["email", "profile", "openid"],
+        },
+        linkedInVerify
+      )
+    );
+  }
+
   passport.serializeUser((user: Express.User, cb) => cb(null, user));
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      prompt: "login consent",
-      scope: ["openid", "email", "profile", "offline_access"],
-    })(req, res, next);
+    const provider = req.query.provider as string;
+    
+    // If provider is not specified or is replit-supported, use Replit Auth
+    if (!provider || ['google', 'github'].includes(provider)) {
+      passport.authenticate(`replitauth:${req.hostname}`, {
+        prompt: "login consent",
+        scope: ["openid", "email", "profile", "offline_access"],
+      })(req, res, next);
+    } else {
+      res.status(400).json({ error: "Invalid provider" });
+    }
   });
 
   app.get("/api/callback", (req, res, next) => {
@@ -134,6 +183,20 @@ export async function setupAuth(app: Express) {
       failureRedirect: "/api/login",
     })(req, res, next);
   });
+
+  // LinkedIn-specific routes (only if credentials are configured)
+  if (process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET) {
+    app.get("/api/login/linkedin", (req, res, next) => {
+      passport.authenticate("linkedin")(req, res, next);
+    });
+
+    app.get("/api/callback/linkedin", (req, res, next) => {
+      passport.authenticate("linkedin", {
+        successReturnToOrRedirect: "/",
+        failureRedirect: "/",
+      })(req, res, next);
+    });
+  }
 
   app.get("/api/logout", (req, res) => {
     req.logout(() => {
