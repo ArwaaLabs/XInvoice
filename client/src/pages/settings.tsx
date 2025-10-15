@@ -24,8 +24,7 @@ type CompanySettings = {
   template: string | null;
   bankName: string | null;
   accountNumber: string | null;
-  routingNumber: string | null;
-  iban: string | null;
+  ifscCode: string | null;
   swiftCode: string | null;
 };
 
@@ -47,8 +46,7 @@ export default function Settings() {
   const [selectedTemplate, setSelectedTemplate] = useState("modern");
   const [bankName, setBankName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
-  const [routingNumber, setRoutingNumber] = useState("");
-  const [iban, setIban] = useState("");
+  const [ifscCode, setIfscCode] = useState("");
   const [swiftCode, setSwiftCode] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -67,8 +65,7 @@ export default function Settings() {
       setSelectedTemplate(settings.template || "modern");
       setBankName(settings.bankName || "");
       setAccountNumber(settings.accountNumber || "");
-      setRoutingNumber(settings.routingNumber || "");
-      setIban(settings.iban || "");
+      setIfscCode(settings.ifscCode || "");
       setSwiftCode(settings.swiftCode || "");
     }
   }, [settings]);
@@ -127,8 +124,7 @@ export default function Settings() {
         template: selectedTemplate,
         bankName: bankName || null,
         accountNumber: accountNumber || null,
-        routingNumber: routingNumber || null,
-        iban: iban || null,
+        ifscCode: ifscCode || null,
         swiftCode: swiftCode || null,
       });
       await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
@@ -172,8 +168,7 @@ export default function Settings() {
         template: selectedTemplate,
         bankName: bankName || null,
         accountNumber: accountNumber || null,
-        routingNumber: routingNumber || null,
-        iban: iban || null,
+        ifscCode: ifscCode || null,
         swiftCode: swiftCode || null,
       });
       await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
@@ -388,34 +383,23 @@ export default function Settings() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="routingNumber">Routing Number</Label>
+                  <Label htmlFor="ifscCode">IFSC Code</Label>
                   <Input
-                    id="routingNumber"
-                    value={routingNumber}
-                    onChange={(e) => setRoutingNumber(e.target.value)}
-                    placeholder="e.g., 021000021"
-                    data-testid="input-routing-number"
+                    id="ifscCode"
+                    value={ifscCode}
+                    onChange={(e) => setIfscCode(e.target.value)}
+                    placeholder="e.g., JAKA0QAZIGD"
+                    data-testid="input-ifsc-code"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="iban">IBAN</Label>
-                  <Input
-                    id="iban"
-                    value={iban}
-                    onChange={(e) => setIban(e.target.value)}
-                    placeholder="e.g., GB82 WEST 1234 5698 7654 32"
-                    data-testid="input-iban"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="swiftCode">SWIFT/BIC Code</Label>
+                  <Label htmlFor="swiftCode">Swift Code</Label>
                   <Input
                     id="swiftCode"
                     value={swiftCode}
                     onChange={(e) => setSwiftCode(e.target.value)}
-                    placeholder="e.g., CHASUS33"
+                    placeholder="e.g., JAKAINB"
                     data-testid="input-swift-code"
                   />
                 </div>
