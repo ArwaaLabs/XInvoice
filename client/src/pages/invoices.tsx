@@ -147,6 +147,7 @@ export default function Invoices() {
         email: settings?.email || "email@company.com",
         phone: settings?.phone || "+1 (555) 000-0000",
         address: settings?.address || "123 Business St, City, State 12345",
+        logo: settings?.logo || undefined,
       },
       client: {
         name: client?.name || "Unknown Client",

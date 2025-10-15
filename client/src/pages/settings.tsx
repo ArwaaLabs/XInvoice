@@ -22,6 +22,11 @@ type CompanySettings = {
   invoicePrefix: string | null;
   nextInvoiceNumber: number | null;
   template: string | null;
+  bankName: string | null;
+  accountNumber: string | null;
+  routingNumber: string | null;
+  iban: string | null;
+  swiftCode: string | null;
 };
 
 export default function Settings() {
@@ -40,6 +45,11 @@ export default function Settings() {
   const [invoicePrefix, setInvoicePrefix] = useState("");
   const [nextNumber, setNextNumber] = useState(1001);
   const [selectedTemplate, setSelectedTemplate] = useState("modern");
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [routingNumber, setRoutingNumber] = useState("");
+  const [iban, setIban] = useState("");
+  const [swiftCode, setSwiftCode] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -55,6 +65,11 @@ export default function Settings() {
       setInvoicePrefix(settings.invoicePrefix || "INV");
       setNextNumber(settings.nextInvoiceNumber || 1001);
       setSelectedTemplate(settings.template || "modern");
+      setBankName(settings.bankName || "");
+      setAccountNumber(settings.accountNumber || "");
+      setRoutingNumber(settings.routingNumber || "");
+      setIban(settings.iban || "");
+      setSwiftCode(settings.swiftCode || "");
     }
   }, [settings]);
 
@@ -110,6 +125,11 @@ export default function Settings() {
         invoicePrefix,
         nextInvoiceNumber: nextNumber,
         template: selectedTemplate,
+        bankName: bankName || null,
+        accountNumber: accountNumber || null,
+        routingNumber: routingNumber || null,
+        iban: iban || null,
+        swiftCode: swiftCode || null,
       });
       await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
       toast({
@@ -150,6 +170,11 @@ export default function Settings() {
         invoicePrefix,
         nextInvoiceNumber: nextNumber,
         template: selectedTemplate,
+        bankName: bankName || null,
+        accountNumber: accountNumber || null,
+        routingNumber: routingNumber || null,
+        iban: iban || null,
+        swiftCode: swiftCode || null,
       });
       await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
       toast({
@@ -326,6 +351,77 @@ export default function Settings() {
               </div>
 
               <Button onClick={handleSaveCompany} disabled={isSaving} data-testid="button-save-company">
+                {isSaving ? "Saving..." : "Save Changes"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Account Information</CardTitle>
+              <CardDescription>
+                Bank account details for payment instructions on invoices
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bankName">Bank Name</Label>
+                  <Input
+                    id="bankName"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    placeholder="e.g., Chase Bank"
+                    data-testid="input-bank-name"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="accountNumber">Account Number</Label>
+                  <Input
+                    id="accountNumber"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    placeholder="e.g., 1234567890"
+                    data-testid="input-account-number"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="routingNumber">Routing Number</Label>
+                  <Input
+                    id="routingNumber"
+                    value={routingNumber}
+                    onChange={(e) => setRoutingNumber(e.target.value)}
+                    placeholder="e.g., 021000021"
+                    data-testid="input-routing-number"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="iban">IBAN</Label>
+                  <Input
+                    id="iban"
+                    value={iban}
+                    onChange={(e) => setIban(e.target.value)}
+                    placeholder="e.g., GB82 WEST 1234 5698 7654 32"
+                    data-testid="input-iban"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="swiftCode">SWIFT/BIC Code</Label>
+                  <Input
+                    id="swiftCode"
+                    value={swiftCode}
+                    onChange={(e) => setSwiftCode(e.target.value)}
+                    placeholder="e.g., CHASUS33"
+                    data-testid="input-swift-code"
+                  />
+                </div>
+              </div>
+
+              <Button onClick={handleSaveCompany} disabled={isSaving} data-testid="button-save-account-info">
                 {isSaving ? "Saving..." : "Save Changes"}
               </Button>
             </CardContent>

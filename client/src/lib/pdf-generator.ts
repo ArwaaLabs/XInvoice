@@ -10,6 +10,7 @@ type InvoiceData = {
     email: string;
     phone: string;
     address: string;
+    logo?: string;
   };
   client: {
     name: string;
@@ -67,14 +68,29 @@ export function generateInvoicePDF(data: InvoiceData) {
   }, 0);
   const total = subtotal - totalDiscount + totalTax;
 
+  // Add company logo if available
+  let logoAdded = false;
+  if (data.company.logo) {
+    try {
+      // Auto-detect image format from data URL
+      const format = data.company.logo.includes('data:image/jpeg') || data.company.logo.includes('data:image/jpg') ? 'JPEG' : 'PNG';
+      doc.addImage(data.company.logo, format, 20, 15, 30, 15);
+      logoAdded = true;
+    } catch (error) {
+      console.error('Error adding logo to PDF:', error);
+    }
+  }
+
+  // Position INVOICE text based on whether logo was successfully added
+  const invoiceTextX = logoAdded ? 55 : 20;
   doc.setFontSize(24);
-  doc.text("INVOICE", 20, 20);
+  doc.text("INVOICE", invoiceTextX, 20);
 
   doc.setFontSize(12);
-  doc.text(`#${data.invoiceNumber}`, 20, 30);
+  doc.text(`#${data.invoiceNumber}`, invoiceTextX, 30);
   
   doc.setFontSize(10);
-  doc.text(`Status: ${data.status.toUpperCase()}`, 20, 38);
+  doc.text(`Status: ${data.status.toUpperCase()}`, invoiceTextX, 38);
 
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
