@@ -28,13 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { type CompanySettings } from "@shared/schema";
-
-const currencies = [
-  { code: "USD", symbol: "$" },
-  { code: "EUR", symbol: "€" },
-  { code: "GBP", symbol: "£" },
-  { code: "JPY", symbol: "¥" },
-];
+import { currencies } from "@shared/currencies";
 
 export default function InvoiceEditor() {
   const [, setLocation] = useLocation();
@@ -154,7 +148,7 @@ export default function InvoiceEditor() {
     dueDate,
     status,
     template: settings?.template as "modern" | "classic" | "minimal" | undefined,
-    primaryColor: settings?.primaryColor,
+    primaryColor: settings?.primaryColor || undefined,
     company: {
       name: settings?.companyName || "Your Company",
       email: settings?.email || "email@company.com",
@@ -297,10 +291,10 @@ export default function InvoiceEditor() {
                   <SelectTrigger id="currency" data-testid="select-currency">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[300px]">
                     {currencies.map((c) => (
                       <SelectItem key={c.code} value={c.code}>
-                        {c.code} ({c.symbol})
+                        {c.code} - {c.name} ({c.symbol})
                       </SelectItem>
                     ))}
                   </SelectContent>

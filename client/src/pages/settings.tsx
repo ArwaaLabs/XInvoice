@@ -10,23 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
-type CompanySettings = {
-  id: string;
-  companyName: string;
-  email: string;
-  phone: string | null;
-  address: string | null;
-  taxId: string | null;
-  logo: string | null;
-  primaryColor: string | null;
-  invoicePrefix: string | null;
-  nextInvoiceNumber: number | null;
-  template: string | null;
-  bankName: string | null;
-  accountNumber: string | null;
-  ifscCode: string | null;
-  swiftCode: string | null;
-};
+import { type CompanySettings } from "@shared/schema";
 
 export default function Settings() {
   const { toast } = useToast();
@@ -46,7 +30,7 @@ export default function Settings() {
   const [selectedTemplate, setSelectedTemplate] = useState("modern");
   const [bankName, setBankName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
-  const [ifscCode, setIfscCode] = useState("");
+  const [routingCode, setRoutingCode] = useState("");
   const [swiftCode, setSwiftCode] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -65,7 +49,7 @@ export default function Settings() {
       setSelectedTemplate(settings.template || "modern");
       setBankName(settings.bankName || "");
       setAccountNumber(settings.accountNumber || "");
-      setIfscCode(settings.ifscCode || "");
+      setRoutingCode(settings.routingCode || "");
       setSwiftCode(settings.swiftCode || "");
     }
   }, [settings]);
@@ -124,7 +108,7 @@ export default function Settings() {
         template: selectedTemplate,
         bankName: bankName || null,
         accountNumber: accountNumber || null,
-        ifscCode: ifscCode || null,
+        routingCode: routingCode || null,
         swiftCode: swiftCode || null,
       });
       await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
@@ -168,7 +152,7 @@ export default function Settings() {
         template: selectedTemplate,
         bankName: bankName || null,
         accountNumber: accountNumber || null,
-        ifscCode: ifscCode || null,
+        routingCode: routingCode || null,
         swiftCode: swiftCode || null,
       });
       await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
@@ -383,14 +367,17 @@ export default function Settings() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="ifscCode">IFSC Code</Label>
+                  <Label htmlFor="routingCode">Routing/Sort Code</Label>
                   <Input
-                    id="ifscCode"
-                    value={ifscCode}
-                    onChange={(e) => setIfscCode(e.target.value)}
-                    placeholder="e.g., JAKA0QAZIGD"
-                    data-testid="input-ifsc-code"
+                    id="routingCode"
+                    value={routingCode}
+                    onChange={(e) => setRoutingCode(e.target.value)}
+                    placeholder="e.g., IFSC (India), Routing (US), Sort Code (UK)"
+                    data-testid="input-routing-code"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Enter your bank routing code: IFSC (India), Routing Number (US), Sort Code (UK), etc.
+                  </p>
                 </div>
 
                 <div className="space-y-2">
