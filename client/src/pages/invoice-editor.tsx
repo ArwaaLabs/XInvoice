@@ -163,6 +163,8 @@ export default function InvoiceEditor() {
     issueDate,
     dueDate,
     status,
+    template: (settings as any)?.template as "modern" | "classic" | "minimal" | undefined,
+    primaryColor: (settings as any)?.primaryColor,
     company: {
       name: settings?.companyName || "Your Company",
       email: settings?.email || "email@company.com",

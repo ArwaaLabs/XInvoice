@@ -32,26 +32,27 @@ type InvoiceData = {
   currency: string;
   notes?: string;
   template?: "modern" | "classic" | "minimal";
+  primaryColor?: string;
 };
 
 type InvoicePreviewProps = {
   data: InvoiceData;
 };
 
-export function InvoicePreview({ data }: InvoicePreviewProps) {
-  const calculateItemTotal = (item: typeof data.items[0]) => {
-    const subtotal = item.quantity * item.unitPrice;
-    let discountAmount = 0;
-    if (item.discountType === "percentage") {
-      discountAmount = (subtotal * item.discount) / 100;
-    } else {
-      discountAmount = item.discount;
-    }
-    const afterDiscount = subtotal - discountAmount;
-    const taxAmount = (afterDiscount * item.taxRate) / 100;
-    return afterDiscount + taxAmount;
-  };
+function calculateItemTotal(item: { quantity: number; unitPrice: number; discount: number; discountType: "percentage" | "fixed"; taxRate: number }) {
+  const subtotal = item.quantity * item.unitPrice;
+  let discountAmount = 0;
+  if (item.discountType === "percentage") {
+    discountAmount = (subtotal * item.discount) / 100;
+  } else {
+    discountAmount = item.discount;
+  }
+  const afterDiscount = subtotal - discountAmount;
+  const taxAmount = (afterDiscount * item.taxRate) / 100;
+  return afterDiscount + taxAmount;
+}
 
+export function InvoicePreview({ data }: InvoicePreviewProps) {
   const subtotal = data.items.reduce(
     (sum, item) => sum + item.quantity * item.unitPrice,
     0
@@ -81,6 +82,248 @@ export function InvoicePreview({ data }: InvoicePreviewProps) {
     paid: "bg-chart-2 text-white",
     overdue: "bg-destructive text-destructive-foreground",
   };
+
+  const template = data.template || "modern";
+  const primaryColor = data.primaryColor || "#3B82F6";
+
+  if (template === "classic") {
+    return (
+      <Card className="p-8 max-w-4xl">
+        <div className="space-y-8">
+          <div className="border-b pb-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                {data.company.logo ? (
+                  <img src={data.company.logo} alt="Company Logo" className="h-10" />
+                ) : (
+                  <h1 className="text-2xl font-serif font-bold">{data.company.name}</h1>
+                )}
+              </div>
+              <div className="text-right space-y-1">
+                <h2 className="text-3xl font-serif font-bold" data-testid="text-invoice-number">
+                  INVOICE
+                </h2>
+                <p className="text-lg font-mono">#{data.invoiceNumber}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-serif font-bold mb-2">From:</h3>
+                <div className="space-y-1 text-sm">
+                  <p className="font-medium">{data.company.name}</p>
+                  <p className="text-muted-foreground">{data.company.email}</p>
+                  <p className="text-muted-foreground">{data.company.phone}</p>
+                  <p className="text-muted-foreground">{data.company.address}</p>
+                </div>
+              </div>
+              <div>
+                <h3 className="text-sm font-serif font-bold mb-2">Bill To:</h3>
+                <div className="space-y-1 text-sm">
+                  <p className="font-medium">{data.client.name}</p>
+                  <p className="text-muted-foreground">{data.client.email}</p>
+                  <p className="text-muted-foreground">{data.client.address}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="font-serif font-bold">Invoice Date:</span>
+                <span>{format(data.issueDate, "MMM dd, yyyy")}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-serif font-bold">Due Date:</span>
+                <span>{format(data.dueDate, "MMM dd, yyyy")}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-serif font-bold">Status:</span>
+                <Badge className={statusColors[data.status]} data-testid="badge-invoice-status">
+                  {data.status.toUpperCase()}
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="border-y">
+              <table className="w-full">
+                <thead className="border-b">
+                  <tr className="text-sm font-serif font-bold">
+                    <th className="text-left p-3">Description</th>
+                    <th className="text-right p-3">Qty</th>
+                    <th className="text-right p-3">Rate</th>
+                    <th className="text-right p-3">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.items.map((item, index) => (
+                    <tr key={index} className="border-b">
+                      <td className="p-3">{item.description}</td>
+                      <td className="p-3 text-right font-mono">{item.quantity}</td>
+                      <td className="p-3 text-right font-mono">
+                        {data.currency}{item.unitPrice.toFixed(2)}
+                      </td>
+                      <td className="p-3 text-right font-mono font-medium">
+                        {data.currency}{calculateItemTotal(item).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-end">
+              <div className="w-80 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Subtotal</span>
+                  <span className="font-mono">{data.currency}{subtotal.toFixed(2)}</span>
+                </div>
+                {totalDiscount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span>Discount</span>
+                    <span className="font-mono">-{data.currency}{totalDiscount.toFixed(2)}</span>
+                  </div>
+                )}
+                {totalTax > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span>Tax</span>
+                    <span className="font-mono">{data.currency}{totalTax.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="border-t pt-2"></div>
+                <div className="flex justify-between text-lg font-serif font-bold">
+                  <span>Total Due:</span>
+                  <span className="font-mono" data-testid="text-total">
+                    {data.currency}{total.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {data.notes && (
+            <div className="space-y-2 border-t pt-6">
+              <h3 className="text-sm font-serif font-bold">Notes:</h3>
+              <p className="text-sm">{data.notes}</p>
+            </div>
+          )}
+        </div>
+      </Card>
+    );
+  }
+
+  if (template === "minimal") {
+    return (
+      <Card className="p-8 max-w-4xl">
+        <div className="space-y-6">
+          <div className="flex items-start justify-between">
+            {data.company.logo && (
+              <img src={data.company.logo} alt="Company Logo" className="h-8" />
+            )}
+            <div className="text-right">
+              <p className="text-xl font-light">Invoice</p>
+              <p className="text-sm font-mono" data-testid="text-invoice-number">#{data.invoiceNumber}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-6 text-sm">
+            <div>
+              <p className="font-medium">{data.company.name}</p>
+              <p className="text-muted-foreground">{data.company.email}</p>
+              <p className="text-muted-foreground">{data.company.phone}</p>
+              <p className="text-muted-foreground">{data.company.address}</p>
+            </div>
+            <div>
+              <p className="font-medium">{data.client.name}</p>
+              <p className="text-muted-foreground">{data.client.email}</p>
+              <p className="text-muted-foreground">{data.client.address}</p>
+            </div>
+          </div>
+
+          <div className="flex gap-6 text-sm">
+            <div>
+              <span className="text-muted-foreground">Issued: </span>
+              <span>{format(data.issueDate, "MMM dd, yyyy")}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Due: </span>
+              <span>{format(data.dueDate, "MMM dd, yyyy")}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Status: </span>
+              <Badge className={statusColors[data.status]} data-testid="badge-invoice-status">
+                {data.status}
+              </Badge>
+            </div>
+          </div>
+
+          <div>
+            <table className="w-full text-sm">
+              <thead className="border-b">
+                <tr className="text-xs uppercase text-muted-foreground">
+                  <th className="text-left pb-2">Description</th>
+                  <th className="text-right pb-2">Qty</th>
+                  <th className="text-right pb-2">Rate</th>
+                  <th className="text-right pb-2">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.items.map((item, index) => (
+                  <tr key={index} className="border-b">
+                    <td className="py-3">{item.description}</td>
+                    <td className="py-3 text-right font-mono">{item.quantity}</td>
+                    <td className="py-3 text-right font-mono">
+                      {data.currency}{item.unitPrice.toFixed(2)}
+                    </td>
+                    <td className="py-3 text-right font-mono">
+                      {data.currency}{calculateItemTotal(item).toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex justify-end">
+            <div className="w-64 space-y-1 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span className="font-mono">{data.currency}{subtotal.toFixed(2)}</span>
+              </div>
+              {totalDiscount > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Discount</span>
+                  <span className="font-mono">-{data.currency}{totalDiscount.toFixed(2)}</span>
+                </div>
+              )}
+              {totalTax > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Tax</span>
+                  <span className="font-mono">{data.currency}{totalTax.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between pt-2 border-t">
+                <span className="font-medium">Total</span>
+                <span className="font-medium font-mono" data-testid="text-total">
+                  {data.currency}{total.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {data.notes && (
+            <div className="text-sm border-t pt-4">
+              <p className="text-muted-foreground mb-1">Notes:</p>
+              <p>{data.notes}</p>
+            </div>
+          )}
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-8 max-w-4xl">
