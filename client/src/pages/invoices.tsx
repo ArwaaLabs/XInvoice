@@ -142,6 +142,8 @@ export default function Invoices() {
       issueDate: new Date(invoice.issueDate),
       dueDate: new Date(invoice.dueDate),
       status: invoice.status,
+      template: settings?.template || "modern",
+      primaryColor: settings?.primaryColor || "#3B82F6",
       company: {
         name: settings?.companyName || "Your Company",
         email: settings?.email || "email@company.com",
