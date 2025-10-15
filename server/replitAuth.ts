@@ -1,7 +1,9 @@
-// Replit Auth integration - supports Google, GitHub, email/password, and more
+// Authentication with direct OAuth providers: Google, GitHub, LinkedIn
 import * as client from "openid-client";
 import { Strategy, type VerifyFunction } from "openid-client/passport";
 import { Strategy as LinkedInStrategy } from "passport-linkedin-oauth2";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import { Strategy as GitHubStrategy } from "passport-github2";
 
 import passport from "passport";
 import session from "express-session";
@@ -119,6 +121,90 @@ export async function setupAuth(app: Express) {
     passport.use(strategy);
   }
 
+  // Google OAuth Strategy (if credentials are provided)
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    const googleVerify: any = async (
+      accessToken: string,
+      refreshToken: string,
+      profile: any,
+      done: any
+    ) => {
+      try {
+        const user = {
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          expires_at: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60), // 30 days
+          claims: {
+            sub: `google:${profile.id}`,
+            email: profile.emails?.[0]?.value || "",
+            first_name: profile.name?.givenName || "",
+            last_name: profile.name?.familyName || "",
+            profile_image_url: profile.photos?.[0]?.value || "",
+          },
+        };
+        
+        await upsertUser(user.claims);
+        done(null, user);
+      } catch (error) {
+        done(error, null);
+      }
+    };
+
+    passport.use(
+      new GoogleStrategy(
+        {
+          clientID: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          callbackURL: `https://${process.env.REPLIT_DOMAINS!.split(",")[0]}/api/callback/google`,
+          scope: ["email", "profile"],
+        },
+        googleVerify
+      )
+    );
+  }
+
+  // GitHub OAuth Strategy (if credentials are provided)
+  if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+    const githubVerify: any = async (
+      accessToken: string,
+      refreshToken: string,
+      profile: any,
+      done: any
+    ) => {
+      try {
+        const user = {
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          expires_at: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60), // 30 days
+          claims: {
+            sub: `github:${profile.id}`,
+            email: profile.emails?.[0]?.value || profile._json?.email || "",
+            first_name: profile.displayName?.split(" ")[0] || "",
+            last_name: profile.displayName?.split(" ").slice(1).join(" ") || "",
+            profile_image_url: profile.photos?.[0]?.value || profile._json?.avatar_url || "",
+          },
+        };
+        
+        await upsertUser(user.claims);
+        done(null, user);
+      } catch (error) {
+        done(error, null);
+      }
+    };
+
+    passport.use(
+      new GitHubStrategy(
+        {
+          clientID: process.env.GITHUB_CLIENT_ID,
+          clientSecret: process.env.GITHUB_CLIENT_SECRET,
+          callbackURL: `https://${process.env.REPLIT_DOMAINS!.split(",")[0]}/api/callback/github`,
+          scope: ["user:email"],
+        },
+        githubVerify
+      )
+    );
+  }
+
   // LinkedIn OAuth Strategy (if credentials are provided)
   if (process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET) {
     const linkedInVerify: any = async (
@@ -131,6 +217,7 @@ export async function setupAuth(app: Express) {
         const user = {
           access_token: accessToken,
           refresh_token: refreshToken,
+          expires_at: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60), // 30 days
           claims: {
             sub: `linkedin:${profile.id}`,
             email: profile.emails?.[0]?.value || "",
@@ -166,7 +253,7 @@ export async function setupAuth(app: Express) {
   app.get("/api/login", (req, res, next) => {
     const provider = req.query.provider as string;
     
-    // If provider is not specified or is replit-supported, use Replit Auth
+    // For backwards compatibility, fallback to Replit Auth if no direct provider is configured
     if (!provider || ['google', 'github'].includes(provider)) {
       passport.authenticate(`replitauth:${req.hostname}`, {
         prompt: "login consent",
@@ -184,7 +271,35 @@ export async function setupAuth(app: Express) {
     })(req, res, next);
   });
 
-  // LinkedIn-specific routes (only if credentials are configured)
+  // Google OAuth routes (only if credentials are configured)
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    app.get("/api/login/google", (req, res, next) => {
+      passport.authenticate("google", { scope: ["email", "profile"] })(req, res, next);
+    });
+
+    app.get("/api/callback/google", (req, res, next) => {
+      passport.authenticate("google", {
+        successReturnToOrRedirect: "/",
+        failureRedirect: "/",
+      })(req, res, next);
+    });
+  }
+
+  // GitHub OAuth routes (only if credentials are configured)
+  if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+    app.get("/api/login/github", (req, res, next) => {
+      passport.authenticate("github", { scope: ["user:email"] })(req, res, next);
+    });
+
+    app.get("/api/callback/github", (req, res, next) => {
+      passport.authenticate("github", {
+        successReturnToOrRedirect: "/",
+        failureRedirect: "/",
+      })(req, res, next);
+    });
+  }
+
+  // LinkedIn OAuth routes (only if credentials are configured)
   if (process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET) {
     app.get("/api/login/linkedin", (req, res, next) => {
       passport.authenticate("linkedin")(req, res, next);
