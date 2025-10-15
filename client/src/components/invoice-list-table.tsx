@@ -119,10 +119,10 @@ export function InvoiceListTable({
                         <Download className="mr-2 h-4 w-4" />
                         Download PDF
                       </DropdownMenuItem>
-                      {invoice.status === "draft" && (
-                        <DropdownMenuItem onClick={() => onSend?.(invoice.id)}>
+                      {(invoice.status === "draft" || invoice.status === "sent") && (
+                        <DropdownMenuItem onClick={() => onSend?.(invoice.id)} data-testid={`button-send-${invoice.id}`}>
                           <Send className="mr-2 h-4 w-4" />
-                          Send to Client
+                          Send via Email
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuSeparator />

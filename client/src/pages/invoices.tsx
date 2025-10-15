@@ -116,13 +116,13 @@ export default function Invoices() {
 
   const handleSend = async (id: string) => {
     try {
-      await apiRequest("PATCH", `/api/invoices/${id}`, { status: "sent" });
+      await apiRequest("POST", `/api/invoices/${id}/send`);
       await queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       toast({
         title: "Invoice sent",
-        description: "The invoice has been sent to the client.",
+        description: "The invoice has been emailed to the client successfully.",
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Failed to send invoice.",

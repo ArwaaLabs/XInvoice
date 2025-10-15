@@ -100,7 +100,7 @@ export default function InvoiceEditor() {
         issueDate: issueDate.toISOString(),
         dueDate: dueDate.toISOString(),
         currency,
-        status: saveStatus,
+        status: "draft", // Always save as draft first
         notes,
         items: items.map(item => ({
           description: item.description,
@@ -112,7 +112,8 @@ export default function InvoiceEditor() {
         })),
       };
 
-      await apiRequest("POST", "/api/invoices", invoiceData);
+      const response = await apiRequest("POST", "/api/invoices", invoiceData);
+      const invoice = await response.json();
 
       if (settings) {
         await apiRequest("POST", "/api/settings", {
@@ -121,19 +122,26 @@ export default function InvoiceEditor() {
         });
       }
 
+      // If status is 'sent', send the email
+      if (saveStatus === "sent") {
+        await apiRequest("POST", `/api/invoices/${invoice.id}/send`);
+      }
+
       await queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
 
       toast({
         title: saveStatus === "draft" ? "Draft saved" : "Invoice sent",
-        description: `Invoice ${invoiceNumber} has been ${saveStatus === "draft" ? "saved as draft" : "sent to client"}.`,
+        description: saveStatus === "draft" 
+          ? `Invoice ${invoiceNumber} has been saved as draft.`
+          : `Invoice ${invoiceNumber} has been emailed to the client successfully.`,
       });
 
       setLocation("/invoices");
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to save invoice.",
+        description: error.message || "Failed to save invoice.",
         variant: "destructive",
       });
     }
@@ -205,7 +213,7 @@ export default function InvoiceEditor() {
           </Button>
           <Button onClick={() => handleSave("sent")} data-testid="button-send-invoice">
             <Send className="mr-2 h-4 w-4" />
-            Send Invoice
+            Send via Email
           </Button>
         </div>
       </div>

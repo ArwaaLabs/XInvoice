@@ -209,6 +209,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Email invoice route
+  app.post("/api/invoices/:id/send", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { sendInvoiceEmail } = await import("./email");
+      
+      // Get invoice with items
+      const invoice = await storage.getInvoice(req.params.id, userId);
+      if (!invoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+
+      // Get client details
+      const client = await storage.getClient(invoice.clientId, userId);
+      if (!client) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+
+      // Get company settings
+      const settings = await storage.getCompanySettings(userId);
+      if (!settings) {
+        return res.status(404).json({ error: "Company settings not found" });
+      }
+
+      // Get line items
+      const items = await storage.getLineItemsByInvoiceId(req.params.id);
+
+      // Calculate total
+      const subtotal = items.reduce((sum, item) => {
+        const itemTotal = parseFloat(item.unitPrice) * item.quantity;
+        const discountAmount = item.discountType === 'percentage' 
+          ? itemTotal * (parseFloat(item.discount || "0") / 100)
+          : parseFloat(item.discount || "0");
+        const taxAmount = (itemTotal - discountAmount) * (parseFloat(item.taxRate || "0") / 100);
+        return sum + itemTotal - discountAmount + taxAmount;
+      }, 0);
+
+      const invoiceDiscount = invoice.discountType === 'percentage'
+        ? subtotal * (parseFloat(invoice.discount || "0") / 100)
+        : parseFloat(invoice.discount || "0");
+      const total = subtotal - invoiceDiscount;
+
+      // Format currency
+      const currencySymbol = invoice.currency === 'USD' ? '$' : invoice.currency;
+      const formattedTotal = `${currencySymbol}${total.toFixed(2)}`;
+
+      // Send email
+      await sendInvoiceEmail({
+        invoiceNumber: invoice.invoiceNumber,
+        clientName: client.name,
+        clientEmail: client.email,
+        companyName: settings.companyName,
+        total: formattedTotal,
+        dueDate: new Date(invoice.dueDate).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+      });
+
+      // Update invoice status to 'sent' and record sent date
+      await storage.updateInvoice(req.params.id, userId, {
+        status: 'sent',
+        sentDate: new Date(),
+      });
+
+      res.json({ success: true, message: "Invoice sent successfully" });
+    } catch (error: any) {
+      console.error("Error sending invoice:", error);
+      res.status(500).json({ error: error.message || "Failed to send invoice" });
+    }
+  });
+
   // Settings routes - protected and user-specific
   app.get("/api/settings", isAuthenticated, async (req: any, res) => {
     try {
