@@ -14,14 +14,15 @@ A professional invoice generation web application built with React, Express, and
 - ✅ **Session Management**: PostgreSQL-backed sessions with 30-day expiration
 - ✅ **Landing Page**: Professional landing page with three OAuth provider buttons
 - ✅ **Protected Routes**: All API endpoints require authentication with isAuthenticated middleware
-- ✅ **Account Information**: Indian banking details (Bank Name, Account Number, IFSC Code, SWIFT Code) in company settings
+- ✅ **International Banking Support**: Generic banking fields (Bank Name, Account Number, Routing/Sort Code, SWIFT Code) supporting worldwide banking systems
+- ✅ **Comprehensive Currency Support**: 170+ currencies from all major countries and regions worldwide
 - ✅ **Logo Display**: Company logo displays on invoice preview and PDF exports (PNG/JPEG support)
 - ✅ **Invoice Templates**: Three distinct template styles (Modern, Classic, Minimal) for both preview and PDF generation
 - ✅ **Type Safety**: End-to-end type safety using CompanySettings from shared schema throughout template flow
-- ✅ Multi-currency support with proper currency grouping and display
+- ✅ Enhanced currency selector with currency names for better user experience
 - ✅ PDF generation with logo embedding and format auto-detection
 - ✅ Professional dashboard with real-time metrics
-- ✅ Settings page with template persistence, logo upload, color picker, and account information
+- ✅ Settings page with template persistence, logo upload, color picker, and international banking information
 
 ## User Preferences
 

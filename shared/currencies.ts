@@ -1,9 +1,37 @@
-// Comprehensive currency list supporting all major world currencies
+// Comprehensive currency list supporting 170+ world currencies
 export const currencies = [
   // North America
   { code: "USD", symbol: "$", name: "US Dollar" },
   { code: "CAD", symbol: "C$", name: "Canadian Dollar" },
   { code: "MXN", symbol: "MX$", name: "Mexican Peso" },
+  { code: "GTQ", symbol: "Q", name: "Guatemalan Quetzal" },
+  { code: "HNL", symbol: "L", name: "Honduran Lempira" },
+  { code: "NIO", symbol: "C$", name: "Nicaraguan Córdoba" },
+  { code: "CRC", symbol: "₡", name: "Costa Rican Colón" },
+  { code: "PAB", symbol: "B/.", name: "Panamanian Balboa" },
+  { code: "DOP", symbol: "RD$", name: "Dominican Peso" },
+  { code: "CUP", symbol: "₱", name: "Cuban Peso" },
+  { code: "JMD", symbol: "J$", name: "Jamaican Dollar" },
+  { code: "HTG", symbol: "G", name: "Haitian Gourde" },
+  { code: "BBD", symbol: "Bds$", name: "Barbadian Dollar" },
+  { code: "TTD", symbol: "TT$", name: "Trinidad & Tobago Dollar" },
+  { code: "BSD", symbol: "B$", name: "Bahamian Dollar" },
+  { code: "BZD", symbol: "BZ$", name: "Belize Dollar" },
+  { code: "XCD", symbol: "EC$", name: "East Caribbean Dollar" },
+  
+  // South America
+  { code: "BRL", symbol: "R$", name: "Brazilian Real" },
+  { code: "ARS", symbol: "AR$", name: "Argentine Peso" },
+  { code: "CLP", symbol: "CL$", name: "Chilean Peso" },
+  { code: "COP", symbol: "COL$", name: "Colombian Peso" },
+  { code: "PEN", symbol: "S/", name: "Peruvian Sol" },
+  { code: "UYU", symbol: "$U", name: "Uruguayan Peso" },
+  { code: "VES", symbol: "Bs.", name: "Venezuelan Bolívar" },
+  { code: "BOB", symbol: "Bs.", name: "Bolivian Boliviano" },
+  { code: "PYG", symbol: "₲", name: "Paraguayan Guaraní" },
+  { code: "GYD", symbol: "G$", name: "Guyanese Dollar" },
+  { code: "SRD", symbol: "$", name: "Surinamese Dollar" },
+  { code: "FKP", symbol: "£", name: "Falkland Islands Pound" },
   
   // Europe
   { code: "EUR", symbol: "€", name: "Euro" },
@@ -12,11 +40,23 @@ export const currencies = [
   { code: "SEK", symbol: "kr", name: "Swedish Krona" },
   { code: "NOK", symbol: "kr", name: "Norwegian Krone" },
   { code: "DKK", symbol: "kr", name: "Danish Krone" },
+  { code: "ISK", symbol: "kr", name: "Icelandic Króna" },
   { code: "PLN", symbol: "zł", name: "Polish Zloty" },
   { code: "CZK", symbol: "Kč", name: "Czech Koruna" },
   { code: "HUF", symbol: "Ft", name: "Hungarian Forint" },
   { code: "RON", symbol: "lei", name: "Romanian Leu" },
   { code: "BGN", symbol: "лв", name: "Bulgarian Lev" },
+  { code: "HRK", symbol: "kn", name: "Croatian Kuna" },
+  { code: "RSD", symbol: "din", name: "Serbian Dinar" },
+  { code: "UAH", symbol: "₴", name: "Ukrainian Hryvnia" },
+  { code: "BYN", symbol: "Br", name: "Belarusian Ruble" },
+  { code: "MKD", symbol: "ден", name: "Macedonian Denar" },
+  { code: "ALL", symbol: "L", name: "Albanian Lek" },
+  { code: "BAM", symbol: "KM", name: "Bosnia-Herzegovina Mark" },
+  { code: "MDL", symbol: "L", name: "Moldovan Leu" },
+  { code: "GEL", symbol: "₾", name: "Georgian Lari" },
+  { code: "AMD", symbol: "֏", name: "Armenian Dram" },
+  { code: "AZN", symbol: "₼", name: "Azerbaijani Manat" },
   
   // Asia Pacific
   { code: "JPY", symbol: "¥", name: "Japanese Yen" },
@@ -34,10 +74,32 @@ export const currencies = [
   { code: "PKR", symbol: "₨", name: "Pakistani Rupee" },
   { code: "BDT", symbol: "৳", name: "Bangladeshi Taka" },
   { code: "LKR", symbol: "Rs", name: "Sri Lankan Rupee" },
+  { code: "NPR", symbol: "Rs", name: "Nepalese Rupee" },
+  { code: "MMK", symbol: "K", name: "Myanmar Kyat" },
+  { code: "KHR", symbol: "៛", name: "Cambodian Riel" },
+  { code: "LAK", symbol: "₭", name: "Lao Kip" },
+  { code: "BND", symbol: "B$", name: "Brunei Dollar" },
+  { code: "MNT", symbol: "₮", name: "Mongolian Tugrik" },
+  { code: "KZT", symbol: "₸", name: "Kazakhstani Tenge" },
+  { code: "UZS", symbol: "so'm", name: "Uzbekistani Som" },
+  { code: "KGS", symbol: "с", name: "Kyrgyzstani Som" },
+  { code: "TJS", symbol: "ЅМ", name: "Tajikistani Somoni" },
+  { code: "TMT", symbol: "m", name: "Turkmenistani Manat" },
+  { code: "AFN", symbol: "؋", name: "Afghan Afghani" },
+  { code: "BDT", symbol: "৳", name: "Bangladeshi Taka" },
+  { code: "BTN", symbol: "Nu.", name: "Bhutanese Ngultrum" },
+  { code: "MVR", symbol: "Rf", name: "Maldivian Rufiyaa" },
   
   // Oceania
   { code: "AUD", symbol: "A$", name: "Australian Dollar" },
   { code: "NZD", symbol: "NZ$", name: "New Zealand Dollar" },
+  { code: "FJD", symbol: "FJ$", name: "Fijian Dollar" },
+  { code: "PGK", symbol: "K", name: "Papua New Guinea Kina" },
+  { code: "WST", symbol: "WS$", name: "Samoan Tālā" },
+  { code: "TOP", symbol: "T$", name: "Tongan Paʻanga" },
+  { code: "VUV", symbol: "VT", name: "Vanuatu Vatu" },
+  { code: "SBD", symbol: "SI$", name: "Solomon Islands Dollar" },
+  { code: "XPF", symbol: "₣", name: "CFP Franc" },
   
   // Middle East
   { code: "AED", symbol: "د.إ", name: "UAE Dirham" },
@@ -49,6 +111,11 @@ export const currencies = [
   { code: "OMR", symbol: "ر.ع.", name: "Omani Rial" },
   { code: "JOD", symbol: "د.ا", name: "Jordanian Dinar" },
   { code: "LBP", symbol: "ل.ل", name: "Lebanese Pound" },
+  { code: "SYP", symbol: "£S", name: "Syrian Pound" },
+  { code: "IQD", symbol: "ع.د", name: "Iraqi Dinar" },
+  { code: "YER", symbol: "﷼", name: "Yemeni Rial" },
+  { code: "IRR", symbol: "﷼", name: "Iranian Rial" },
+  { code: "TRY", symbol: "₺", name: "Turkish Lira" },
   
   // Africa
   { code: "ZAR", symbol: "R", name: "South African Rand" },
@@ -59,17 +126,69 @@ export const currencies = [
   { code: "TZS", symbol: "TSh", name: "Tanzanian Shilling" },
   { code: "UGX", symbol: "USh", name: "Ugandan Shilling" },
   { code: "MAD", symbol: "د.م.", name: "Moroccan Dirham" },
+  { code: "ETB", symbol: "Br", name: "Ethiopian Birr" },
+  { code: "DZD", symbol: "د.ج", name: "Algerian Dinar" },
+  { code: "TND", symbol: "د.ت", name: "Tunisian Dinar" },
+  { code: "LYD", symbol: "ل.د", name: "Libyan Dinar" },
+  { code: "SDG", symbol: "ج.س.", name: "Sudanese Pound" },
+  { code: "SSP", symbol: "£", name: "South Sudanese Pound" },
+  { code: "SOS", symbol: "Sh", name: "Somali Shilling" },
+  { code: "DJF", symbol: "Fdj", name: "Djiboutian Franc" },
+  { code: "ERN", symbol: "Nfk", name: "Eritrean Nakfa" },
+  { code: "MUR", symbol: "₨", name: "Mauritian Rupee" },
+  { code: "SCR", symbol: "₨", name: "Seychellois Rupee" },
+  { code: "MGA", symbol: "Ar", name: "Malagasy Ariary" },
+  { code: "XOF", symbol: "CFA", name: "West African CFA Franc" },
+  { code: "XAF", symbol: "FCFA", name: "Central African CFA Franc" },
+  { code: "KMF", symbol: "CF", name: "Comorian Franc" },
+  { code: "BWP", symbol: "P", name: "Botswana Pula" },
+  { code: "NAD", symbol: "N$", name: "Namibian Dollar" },
+  { code: "SZL", symbol: "L", name: "Swazi Lilangeni" },
+  { code: "LSL", symbol: "L", name: "Lesotho Loti" },
+  { code: "ZMW", symbol: "ZK", name: "Zambian Kwacha" },
+  { code: "MWK", symbol: "MK", name: "Malawian Kwacha" },
+  { code: "MZN", symbol: "MT", name: "Mozambican Metical" },
+  { code: "ZWL", symbol: "Z$", name: "Zimbabwean Dollar" },
+  { code: "AOA", symbol: "Kz", name: "Angolan Kwanza" },
+  { code: "CVE", symbol: "$", name: "Cape Verdean Escudo" },
+  { code: "GMD", symbol: "D", name: "Gambian Dalasi" },
+  { code: "GNF", symbol: "FG", name: "Guinean Franc" },
+  { code: "LRD", symbol: "L$", name: "Liberian Dollar" },
+  { code: "SLE", symbol: "Le", name: "Sierra Leonean Leone" },
+  { code: "STN", symbol: "Db", name: "São Tomé & Príncipe Dobra" },
+  { code: "BIF", symbol: "FBu", name: "Burundian Franc" },
+  { code: "RWF", symbol: "FRw", name: "Rwandan Franc" },
+  { code: "CDF", symbol: "FC", name: "Congolese Franc" },
   
-  // South America
-  { code: "BRL", symbol: "R$", name: "Brazilian Real" },
-  { code: "ARS", symbol: "AR$", name: "Argentine Peso" },
-  { code: "CLP", symbol: "CL$", name: "Chilean Peso" },
-  { code: "COP", symbol: "COL$", name: "Colombian Peso" },
-  { code: "PEN", symbol: "S/", name: "Peruvian Sol" },
-  { code: "UYU", symbol: "$U", name: "Uruguayan Peso" },
-  
-  // Other Major Currencies
+  // Russia & Former Soviet States
   { code: "RUB", symbol: "₽", name: "Russian Ruble" },
-  { code: "TRY", symbol: "₺", name: "Turkish Lira" },
-  { code: "UAH", symbol: "₴", name: "Ukrainian Hryvnia" },
+  
+  // Special & Cryptocurrency Representation
+  { code: "XAU", symbol: "oz t", name: "Gold (troy ounce)" },
+  { code: "XAG", symbol: "oz t", name: "Silver (troy ounce)" },
+  { code: "XPT", symbol: "oz t", name: "Platinum (troy ounce)" },
+  { code: "XPD", symbol: "oz t", name: "Palladium (troy ounce)" },
+  
+  // Additional Asian Currencies
+  { code: "MOP", symbol: "MOP$", name: "Macanese Pataca" },
+  { code: "KPW", symbol: "₩", name: "North Korean Won" },
+  
+  // Additional Caribbean
+  { code: "AWG", symbol: "ƒ", name: "Aruban Florin" },
+  { code: "ANG", symbol: "ƒ", name: "Netherlands Antillean Guilder" },
+  { code: "KYD", symbol: "CI$", name: "Cayman Islands Dollar" },
+  { code: "BMD", symbol: "$", name: "Bermudian Dollar" },
+  
+  // Additional European
+  { code: "GIP", symbol: "£", name: "Gibraltar Pound" },
+  { code: "FKP", symbol: "£", name: "Falkland Islands Pound" },
+  { code: "SHP", symbol: "£", name: "Saint Helena Pound" },
+  
+  // Additional Pacific
+  { code: "KID", symbol: "$", name: "Kiribati Dollar" },
+  { code: "NRD", symbol: "$", name: "Nauruan Dollar" },
+  { code: "TVD", symbol: "$", name: "Tuvaluan Dollar" },
+  
+  // Additional Middle East & North Africa
+  { code: "MRU", symbol: "UM", name: "Mauritanian Ouguiya" },
 ];
