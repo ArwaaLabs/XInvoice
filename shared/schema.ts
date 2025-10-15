@@ -76,6 +76,11 @@ export const companySettings = pgTable("company_settings", {
   invoicePrefix: text("invoice_prefix").default("INV"),
   nextInvoiceNumber: integer("next_invoice_number").default(1001),
   template: text("template").default("modern"),
+  bankName: text("bank_name"),
+  accountNumber: text("account_number"),
+  routingNumber: text("routing_number"),
+  iban: text("iban"),
+  swiftCode: text("swift_code"),
 });
 
 export const upsertUserSchema = createInsertSchema(users);
