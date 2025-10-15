@@ -171,6 +171,41 @@ export default function Settings() {
     }
   };
 
+  const handleSaveTemplate = async () => {
+    setIsSaving(true);
+    try {
+      await apiRequest("POST", "/api/settings", {
+        companyName,
+        email,
+        phone: phone || null,
+        address: address || null,
+        taxId: taxId || null,
+        logo: logo || null,
+        primaryColor,
+        invoicePrefix,
+        nextInvoiceNumber: nextNumber,
+        template: selectedTemplate,
+        bankName: bankName || null,
+        accountNumber: accountNumber || null,
+        routingCode: routingCode || null,
+        swiftCode: swiftCode || null,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      toast({
+        title: "Template saved",
+        description: "Invoice template has been successfully updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save template.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="h-48 flex items-center justify-center text-muted-foreground">
@@ -486,12 +521,12 @@ export default function Settings() {
                 })}
               </div>
               <div className="mt-6">
-                <p className="text-sm text-muted-foreground mb-2">
+                <p className="text-sm text-muted-foreground mb-4">
                   Selected template: <span className="font-medium capitalize">{selectedTemplate}</span>
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  Note: Template selection is saved automatically when you update company or invoice settings.
-                </p>
+                <Button onClick={handleSaveTemplate} disabled={isSaving} data-testid="button-save-template">
+                  {isSaving ? "Saving..." : "Save Template"}
+                </Button>
               </div>
             </CardContent>
           </Card>
