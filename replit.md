@@ -4,17 +4,20 @@
 
 A professional invoice generation web application built with React, Express, and PostgreSQL. The system enables users to create, manage, and export invoices with multi-currency support, customizable branding, and PDF generation capabilities. Features Google authentication via Replit Auth for secure user access. The application follows a Linear-inspired minimalist design approach with Stripe's dashboard sophistication, emphasizing clarity and professionalism.
 
-**Latest Updates (October 14, 2025)**
-- ✅ **Google Authentication**: Implemented Replit Auth with OpenID Connect (supports Google, GitHub, email/password)
+**Latest Updates (October 15, 2025)**
+- ✅ **Multi-Provider OAuth**: Direct authentication with Google, GitHub, and LinkedIn (not via Replit Auth)
+- ✅ **Google OAuth**: passport-google-oauth20 with email/profile scopes
+- ✅ **GitHub OAuth**: passport-github2 with user:email scope
+- ✅ **LinkedIn OAuth**: passport-linkedin-oauth2 with OpenID Connect (openid, profile, email scopes)
 - ✅ **PostgreSQL Database**: Migrated from in-memory to PostgreSQL with Drizzle ORM for persistent storage
 - ✅ **User Data Isolation**: All clients, invoices, and settings are user-specific with foreign key constraints
-- ✅ **Session Management**: PostgreSQL-backed sessions with automatic token refresh
-- ✅ **Landing Page**: Professional landing page for unauthenticated users with login flow
+- ✅ **Session Management**: PostgreSQL-backed sessions with 30-day expiration
+- ✅ **Landing Page**: Professional landing page with three OAuth provider buttons
 - ✅ **Protected Routes**: All API endpoints require authentication with isAuthenticated middleware
 - ✅ Multi-currency support with proper currency grouping and display
 - ✅ PDF generation for invoice downloads
 - ✅ Professional dashboard with real-time metrics
-- ✅ Date validation using z.coerce.date() for flexible API inputs
+- ✅ Settings page with template persistence, logo upload, and color picker
 
 ## User Preferences
 
@@ -66,11 +69,14 @@ Preferred communication style: Simple, everyday language.
 - UUID-based primary keys for distributed system compatibility
 
 **Authentication System**
-- Replit Auth with OpenID Connect protocol
-- Support for multiple providers: Google, GitHub, email/password
+- Direct OAuth integration with Google, GitHub, and LinkedIn
+- passport-google-oauth20 for Google authentication
+- passport-github2 for GitHub authentication  
+- passport-linkedin-oauth2 for LinkedIn authentication with OpenID Connect
 - PostgreSQL-backed session storage with connect-pg-simple
-- Token refresh handling with automatic session renewal
+- 30-day session expiration with automatic validation
 - Middleware-based route protection (isAuthenticated)
+- User IDs prefixed by provider (google:, github:, linkedin:)
 
 **Database Schema (Drizzle ORM)**
 - `users` table: User profiles from OAuth (id, email, firstName, lastName, profileImageUrl)

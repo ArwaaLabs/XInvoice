@@ -27,7 +27,7 @@ export default function Landing() {
             <div className="flex flex-wrap gap-3 justify-center">
               <Button
                 size="lg"
-                onClick={() => window.location.href = "/api/login?provider=google"}
+                onClick={() => window.location.href = "/api/login/google"}
                 data-testid="button-login-google"
                 className="gap-2"
               >
@@ -37,7 +37,7 @@ export default function Landing() {
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => window.location.href = "/api/login?provider=github"}
+                onClick={() => window.location.href = "/api/login/github"}
                 data-testid="button-login-github"
                 className="gap-2"
               >
