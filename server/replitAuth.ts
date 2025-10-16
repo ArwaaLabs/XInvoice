@@ -19,13 +19,18 @@ neonConfig.webSocketConstructor = ws;
 
 // Get the current domain based on environment
 function getCurrentDomain(): string {
-  // For Netlify production
+  // For Netlify production - use the primary site URL
   if (process.env.URL) {
+    // Remove protocol if present
     return process.env.URL.replace('https://', '').replace('http://', '');
   }
   // For Netlify deploy preview
   if (process.env.DEPLOY_PRIME_URL) {
     return process.env.DEPLOY_PRIME_URL.replace('https://', '').replace('http://', '');
+  }
+  // For custom domain or manual override
+  if (process.env.OAUTH_REDIRECT_DOMAIN) {
+    return process.env.OAUTH_REDIRECT_DOMAIN;
   }
   // For Replit or other platforms
   if (process.env.REPLIT_DOMAINS) {
@@ -33,6 +38,13 @@ function getCurrentDomain(): string {
   }
   // Fallback to localhost for development
   return 'localhost:5000';
+}
+
+// Get the full base URL with protocol
+function getBaseURL(): string {
+  const domain = getCurrentDomain();
+  const protocol = domain === 'localhost' || domain.includes('localhost:') ? 'http' : 'https';
+  return `${protocol}://${domain}`;
 }
 
 // Get protocol based on environment
@@ -172,9 +184,10 @@ export async function setupAuth(app: Express) {
     };
 
     // Determine the correct callback URL based on environment
-    const domain = getCurrentDomain();
-    const protocol = getProtocol(domain);
-    const callbackURL = `${protocol}://${domain}/api/callback/google`;
+    const baseURL = getBaseURL();
+    const callbackURL = `${baseURL}/api/callback/google`;
+    
+    console.log('Google OAuth callback URL:', callbackURL); // Debug log
 
     passport.use(
       new GoogleStrategy(
@@ -219,9 +232,10 @@ export async function setupAuth(app: Express) {
     };
 
     // Determine the correct callback URL based on environment
-    const domain = getCurrentDomain();
-    const protocol = getProtocol(domain);
-    const callbackURL = `${protocol}://${domain}/api/callback/github`;
+    const baseURL = getBaseURL();
+    const callbackURL = `${baseURL}/api/callback/github`;
+    
+    console.log('GitHub OAuth callback URL:', callbackURL); // Debug log
 
     passport.use(
       new GitHubStrategy(
@@ -266,9 +280,10 @@ export async function setupAuth(app: Express) {
     };
 
     // Determine the correct callback URL based on environment
-    const domain = getCurrentDomain();
-    const protocol = getProtocol(domain);
-    const callbackURL = `${protocol}://${domain}/api/callback/linkedin`;
+    const baseURL = getBaseURL();
+    const callbackURL = `${baseURL}/api/callback/linkedin`;
+    
+    console.log('LinkedIn OAuth callback URL:', callbackURL); // Debug log
 
     passport.use(
       new LinkedInStrategy(
@@ -350,13 +365,19 @@ export async function setupAuth(app: Express) {
   }
 
   app.get("/api/logout", (req, res) => {
-    req.logout(() => {
-      res.redirect(
-        client.buildEndSessionUrl(config, {
-          client_id: process.env.REPL_ID!,
-          post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
-        }).href
-      );
+    const baseURL = getBaseURL();
+    req.logout((err) => {
+      if (err) {
+        console.error('Logout error:', err);
+      }
+      // Destroy the session
+      req.session.destroy((destroyErr) => {
+        if (destroyErr) {
+          console.error('Session destroy error:', destroyErr);
+        }
+        // Redirect to home page
+        res.redirect(baseURL);
+      });
     });
   });
 }
