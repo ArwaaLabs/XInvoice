@@ -7,7 +7,10 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageProvider } from "@/hooks/useLanguage";
+import { LanguageSelector } from "@/components/language-selector";
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 import Dashboard from "@/pages/dashboard";
 import InvoiceEditor from "@/pages/invoice-editor";
 import Invoices from "@/pages/invoices";
@@ -18,13 +21,14 @@ import NotFound from "@/pages/not-found";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { t } = useTranslation();
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center space-y-4">
           <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -61,10 +65,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light">
-        <TooltipProvider>
-          <AuthenticatedApp style={style} />
-          <Toaster />
-        </TooltipProvider>
+        <LanguageProvider>
+          <TooltipProvider>
+            <AuthenticatedApp style={style} />
+            <Toaster />
+          </TooltipProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
@@ -86,6 +92,7 @@ function AuthenticatedApp({ style }: { style: Record<string, string> }) {
             <SidebarTrigger data-testid="button-sidebar-toggle" />
             <div className="flex items-center gap-4">
               <UserMenu />
+              <LanguageSelector />
               <ThemeToggle />
             </div>
           </header>
@@ -100,6 +107,7 @@ function AuthenticatedApp({ style }: { style: Record<string, string> }) {
 
 function UserMenu() {
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   if (!user) return null;
 
@@ -124,7 +132,7 @@ function UserMenu() {
         className="text-sm text-muted-foreground hover:text-foreground"
         data-testid="button-logout"
       >
-        Logout
+        {t('nav.logout')}
       </button>
     </div>
   );

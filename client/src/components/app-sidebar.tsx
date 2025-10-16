@@ -1,5 +1,6 @@
 import { Home, FileText, Users, Settings, Plus } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import {
   Sidebar,
   SidebarContent,
@@ -16,22 +17,22 @@ import { Button } from "@/components/ui/button";
 
 const menuItems = [
   {
-    title: "Dashboard",
+    titleKey: "nav.dashboard",
     url: "/",
     icon: Home,
   },
   {
-    title: "Invoices",
+    titleKey: "nav.invoices",
     url: "/invoices",
     icon: FileText,
   },
   {
-    title: "Clients",
+    titleKey: "nav.clients",
     url: "/clients",
     icon: Users,
   },
   {
-    title: "Settings",
+    titleKey: "nav.settings",
     url: "/settings",
     icon: Settings,
   },
@@ -39,6 +40,7 @@ const menuItems = [
 
 export function AppSidebar() {
   const [location] = useLocation();
+  const { t } = useTranslation();
 
   return (
     <Sidebar>
@@ -48,26 +50,26 @@ export function AppSidebar() {
             <FileText className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-base font-semibold">Invoice Pro</h2>
-            <p className="text-xs text-muted-foreground">Professional Billing</p>
+            <h2 className="text-base font-semibold">{t('appName')}</h2>
+            <p className="text-xs text-muted-foreground">{t('appTagline')}</p>
           </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('nav.dashboard')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.titleKey}>
                   <SidebarMenuButton
                     asChild
                     isActive={location === item.url}
-                    data-testid={`link-${item.title.toLowerCase()}`}
+                    data-testid={`link-${item.titleKey.split('.')[1]}`}
                   >
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <span>{t(item.titleKey)}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -79,7 +81,7 @@ export function AppSidebar() {
       <SidebarFooter className="p-4">
         <Button className="w-full" data-testid="button-new-invoice">
           <Plus className="h-4 w-4 mr-2" />
-          New Invoice
+          {t('dashboard.newInvoice')}
         </Button>
       </SidebarFooter>
     </Sidebar>

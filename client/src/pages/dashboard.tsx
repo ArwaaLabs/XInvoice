@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { InvoiceStats } from "@/components/invoice-stats";
 import { InvoiceListTable, type InvoiceListItem } from "@/components/invoice-list-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +41,7 @@ type Client = {
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const { data: invoices = [], isLoading: invoicesLoading } = useQuery<Invoice[]>({
     queryKey: ["/api/invoices"],
@@ -128,13 +130,13 @@ export default function Dashboard() {
       await apiRequest("DELETE", `/api/invoices/${id}`);
       await queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       toast({
-        title: "Invoice deleted",
-        description: "The invoice has been successfully deleted.",
+        title: t('invoices.deleteSuccess'),
+        description: t('invoices.deleteSuccess'),
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to delete invoice.",
+        title: t('common.error'),
+        description: t('invoices.deleteError'),
         variant: "destructive",
       });
     }
@@ -190,14 +192,14 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-semibold">Dashboard</h1>
+          <h1 className="text-3xl font-semibold">{t('dashboard.title')}</h1>
           <p className="text-muted-foreground mt-1">
-            Overview of your invoicing activity
+            {t('dashboard.subtitle')}
           </p>
         </div>
         <Button onClick={() => setLocation("/invoice/new")} data-testid="button-create-invoice">
           <Plus className="mr-2 h-4 w-4" />
-          New Invoice
+          {t('dashboard.newInvoice')}
         </Button>
       </div>
 
@@ -205,13 +207,13 @@ export default function Dashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Recent Invoices</CardTitle>
-          <CardDescription>Your latest billing activity</CardDescription>
+          <CardTitle>{t('dashboard.recentInvoices')}</CardTitle>
+          <CardDescription>{t('dashboard.recentInvoicesDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {invoicesLoading ? (
             <div className="h-48 flex items-center justify-center text-muted-foreground">
-              Loading invoices...
+              {t('dashboard.loadingInvoices')}
             </div>
           ) : (
             <InvoiceListTable

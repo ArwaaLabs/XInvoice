@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Search, Filter, Plus } from "lucide-react";
 import { InvoiceListTable, type InvoiceListItem } from "@/components/invoice-list-table";
 import { Input } from "@/components/ui/input";
@@ -47,6 +48,7 @@ type Client = {
 export default function Invoices() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -103,13 +105,13 @@ export default function Invoices() {
       await apiRequest("DELETE", `/api/invoices/${id}`);
       await queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       toast({
-        title: "Invoice deleted",
-        description: "The invoice has been successfully deleted.",
+        title: t('invoices.deleteSuccess'),
+        description: t('invoices.deleteSuccess'),
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to delete invoice.",
+        title: t('common.error'),
+        description: t('invoices.deleteError'),
         variant: "destructive",
       });
     }
@@ -120,13 +122,13 @@ export default function Invoices() {
       await apiRequest("POST", `/api/invoices/${id}/send`);
       await queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       toast({
-        title: "Invoice sent",
-        description: "The invoice has been emailed to the client successfully.",
+        title: t('invoices.sendSuccess'),
+        description: t('invoices.sendSuccess'),
       });
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Failed to send invoice.",
+        title: t('common.error'),
+        description: t('invoices.sendError'),
         variant: "destructive",
       });
     }
@@ -182,14 +184,14 @@ export default function Invoices() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-semibold">Invoices</h1>
+          <h1 className="text-3xl font-semibold">{t('invoices.title')}</h1>
           <p className="text-muted-foreground mt-1">
-            Manage all your invoices in one place
+            {t('invoices.subtitle')}
           </p>
         </div>
         <Button onClick={() => setLocation("/invoice/new")} data-testid="button-new-invoice">
           <Plus className="mr-2 h-4 w-4" />
-          New Invoice
+          {t('invoices.createInvoice')}
         </Button>
       </div>
 
@@ -198,7 +200,7 @@ export default function Invoices() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search invoices..."
+              placeholder={t('common.search') + '...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -212,18 +214,18 @@ export default function Invoices() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="sent">Sent</SelectItem>
-            <SelectItem value="paid">Paid</SelectItem>
-            <SelectItem value="overdue">Overdue</SelectItem>
+            <SelectItem value="all">{t('invoices.allStatus')}</SelectItem>
+            <SelectItem value="draft">{t('invoices.statuses.draft')}</SelectItem>
+            <SelectItem value="sent">{t('invoices.statuses.sent')}</SelectItem>
+            <SelectItem value="paid">{t('invoices.statuses.paid')}</SelectItem>
+            <SelectItem value="overdue">{t('invoices.statuses.overdue')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {isLoading ? (
         <div className="h-48 flex items-center justify-center text-muted-foreground">
-          Loading invoices...
+          {t('common.loading')}
         </div>
       ) : (
         <InvoiceListTable

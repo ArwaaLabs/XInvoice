@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Upload, FileText, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ import { type CompanySettings } from "@shared/schema";
 
 export default function Settings() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const { data: settings, isLoading } = useQuery<CompanySettings>({
     queryKey: ["/api/settings"],
   });
@@ -60,7 +62,7 @@ export default function Settings() {
 
     if (!file.type.startsWith("image/")) {
       toast({
-        title: "Invalid file",
+        title: t('settings.missingInfo'),
         description: "Please upload an image file (PNG or JPG).",
         variant: "destructive",
       });
@@ -69,7 +71,7 @@ export default function Settings() {
 
     if (file.size > 2 * 1024 * 1024) {
       toast({
-        title: "File too large",
+        title: t('settings.missingInfo'),
         description: "Please upload an image smaller than 2MB.",
         variant: "destructive",
       });
@@ -86,8 +88,8 @@ export default function Settings() {
   const handleSaveCompany = async () => {
     if (!companyName || !email) {
       toast({
-        title: "Missing information",
-        description: "Company name and email are required.",
+        title: t('settings.missingInfo'),
+        description: t('settings.requiredFields'),
         variant: "destructive",
       });
       return;
@@ -113,13 +115,13 @@ export default function Settings() {
       });
       await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
       toast({
-        title: "Settings saved",
-        description: "Company information has been successfully updated.",
+        title: t('settings.saveSuccess'),
+        description: t('settings.saveSuccess'),
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to save settings.",
+        title: t('common.error'),
+        description: t('settings.saveError'),
         variant: "destructive",
       });
     } finally {
@@ -130,8 +132,8 @@ export default function Settings() {
   const handleSaveInvoice = async () => {
     if (!invoicePrefix) {
       toast({
-        title: "Missing information",
-        description: "Invoice prefix is required.",
+        title: t('settings.missingInfo'),
+        description: t('settings.invoicePrefixRequired'),
         variant: "destructive",
       });
       return;
@@ -157,13 +159,13 @@ export default function Settings() {
       });
       await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
       toast({
-        title: "Settings saved",
-        description: "Invoice settings have been successfully updated.",
+        title: t('settings.saveSuccess'),
+        description: t('settings.saveSuccess'),
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to save settings.",
+        title: t('common.error'),
+        description: t('settings.saveError'),
         variant: "destructive",
       });
     } finally {
@@ -192,13 +194,13 @@ export default function Settings() {
       });
       await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
       toast({
-        title: "Template saved",
-        description: "Invoice template has been successfully updated.",
+        title: t('settings.saveSuccess'),
+        description: t('settings.saveSuccess'),
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to save template.",
+        title: t('common.error'),
+        description: t('settings.saveError'),
         variant: "destructive",
       });
     } finally {
@@ -209,7 +211,7 @@ export default function Settings() {
   if (isLoading) {
     return (
       <div className="h-48 flex items-center justify-center text-muted-foreground">
-        Loading settings...
+        {t('common.loading')}
       </div>
     );
   }
@@ -217,31 +219,31 @@ export default function Settings() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold">Settings</h1>
+        <h1 className="text-3xl font-semibold">{t('settings.title')}</h1>
         <p className="text-muted-foreground mt-1">
-          Manage your company information and preferences
+          {t('settings.subtitle')}
         </p>
       </div>
 
       <Tabs defaultValue="company" className="space-y-6">
         <TabsList>
-          <TabsTrigger value="company" data-testid="tab-company">Company Info</TabsTrigger>
-          <TabsTrigger value="invoice" data-testid="tab-invoice">Invoice Settings</TabsTrigger>
-          <TabsTrigger value="templates" data-testid="tab-templates">Templates</TabsTrigger>
+          <TabsTrigger value="company" data-testid="tab-company">{t('settings.tabs.company')}</TabsTrigger>
+          <TabsTrigger value="invoice" data-testid="tab-invoice">{t('settings.tabs.invoice')}</TabsTrigger>
+          <TabsTrigger value="templates" data-testid="tab-templates">{t('settings.tabs.templates')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="company" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Company Information</CardTitle>
+              <CardTitle>{t('settings.company.title')}</CardTitle>
               <CardDescription>
-                This information will appear on your invoices
+                {t('settings.company.description')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="logo">Company Logo</Label>
+                  <Label htmlFor="logo">{t('settings.company.logo')}</Label>
                   <div className="mt-2 flex items-center gap-4">
                     <div className="flex h-24 w-24 items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted overflow-hidden">
                       {logo ? (
@@ -265,7 +267,7 @@ export default function Settings() {
                         data-testid="button-upload-logo"
                       >
                         <Upload className="mr-2 h-4 w-4" />
-                        Upload Logo
+                        {t('settings.company.uploadLogo')}
                       </Button>
                       {logo && (
                         <Button 
@@ -274,19 +276,19 @@ export default function Settings() {
                           onClick={() => setLogo(null)}
                           data-testid="button-remove-logo"
                         >
-                          Remove Logo
+                          {t('settings.company.removeLogo')}
                         </Button>
                       )}
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Recommended size: 200x200px. PNG or JPG format. Max 2MB.
+                    {t('settings.company.logoHelp')}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="companyName">Company Name</Label>
+                    <Label htmlFor="companyName">{t('settings.company.companyName')}</Label>
                     <Input
                       id="companyName"
                       value={companyName}
@@ -296,7 +298,7 @@ export default function Settings() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t('settings.company.email')}</Label>
                     <Input
                       id="email"
                       type="email"
@@ -307,7 +309,7 @@ export default function Settings() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
+                    <Label htmlFor="phone">{t('settings.company.phone')}</Label>
                     <Input
                       id="phone"
                       value={phone}
@@ -317,7 +319,7 @@ export default function Settings() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="taxId">Tax ID (Optional)</Label>
+                    <Label htmlFor="taxId">{t('settings.company.taxId')}</Label>
                     <Input
                       id="taxId"
                       placeholder="XX-XXXXXXX"
@@ -329,7 +331,7 @@ export default function Settings() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
+                  <Label htmlFor="address">{t('settings.company.address')}</Label>
                   <Textarea
                     id="address"
                     value={address}
@@ -340,7 +342,7 @@ export default function Settings() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="primaryColor">Brand Color</Label>
+                  <Label htmlFor="primaryColor">{t('settings.company.brandColor')}</Label>
                   <div className="flex items-center gap-3">
                     <input
                       type="color"
@@ -359,28 +361,28 @@ export default function Settings() {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    This color will be used for branding elements on your invoices
+                    {t('settings.company.brandColorHelp')}
                   </p>
                 </div>
               </div>
 
               <Button onClick={handleSaveCompany} disabled={isSaving} data-testid="button-save-company">
-                {isSaving ? "Saving..." : "Save Changes"}
+                {isSaving ? t('common.saving') : t('common.save')}
               </Button>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Account Information</CardTitle>
+              <CardTitle>{t('settings.account.title')}</CardTitle>
               <CardDescription>
-                Bank account details for payment instructions on invoices
+                {t('settings.account.description')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="bankName">Bank Name</Label>
+                  <Label htmlFor="bankName">{t('settings.account.bankName')}</Label>
                   <Input
                     id="bankName"
                     value={bankName}
@@ -391,7 +393,7 @@ export default function Settings() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="accountNumber">Account Number</Label>
+                  <Label htmlFor="accountNumber">{t('settings.account.accountNumber')}</Label>
                   <Input
                     id="accountNumber"
                     value={accountNumber}
@@ -402,7 +404,7 @@ export default function Settings() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="routingCode">Routing/Sort/IFSC Code</Label>
+                  <Label htmlFor="routingCode">{t('settings.account.routingCode')}</Label>
                   <Input
                     id="routingCode"
                     value={routingCode}
@@ -411,12 +413,12 @@ export default function Settings() {
                     data-testid="input-routing-code"
                   />
                   <p className="text-xs text-muted-foreground">
-                    🇮🇳 IFSC Code (India) | 🇺🇸 Routing Number (US) | 🇬🇧 Sort Code (UK) | 🌍 Other countries use their local format
+                    {t('settings.account.routingCodeHelp')}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="swiftCode">Swift Code</Label>
+                  <Label htmlFor="swiftCode">{t('settings.account.swiftCode')}</Label>
                   <Input
                     id="swiftCode"
                     value={swiftCode}
@@ -428,7 +430,7 @@ export default function Settings() {
               </div>
 
               <Button onClick={handleSaveCompany} disabled={isSaving} data-testid="button-save-account-info">
-                {isSaving ? "Saving..." : "Save Changes"}
+                {isSaving ? t('common.saving') : t('common.save')}
               </Button>
             </CardContent>
           </Card>
@@ -437,9 +439,9 @@ export default function Settings() {
         <TabsContent value="invoice" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Invoice Configuration</CardTitle>
+              <CardTitle>{t('settings.invoiceConfig.title')}</CardTitle>
               <CardDescription>
-                Customize how your invoices are numbered and formatted
+                {t('settings.invoiceConfig.description')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
