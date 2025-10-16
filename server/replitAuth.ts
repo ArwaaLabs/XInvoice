@@ -17,8 +17,30 @@ import { storage } from "./storage";
 // Configure WebSocket for Neon serverless
 neonConfig.webSocketConstructor = ws;
 
-if (!process.env.REPLIT_DOMAINS) {
-  throw new Error("Environment variable REPLIT_DOMAINS not provided");
+// Get the current domain based on environment
+function getCurrentDomain(): string {
+  // For Netlify production
+  if (process.env.URL) {
+    return process.env.URL.replace('https://', '').replace('http://', '');
+  }
+  // For Netlify deploy preview
+  if (process.env.DEPLOY_PRIME_URL) {
+    return process.env.DEPLOY_PRIME_URL.replace('https://', '').replace('http://', '');
+  }
+  // For Replit or other platforms
+  if (process.env.REPLIT_DOMAINS) {
+    return process.env.REPLIT_DOMAINS.split(',')[0];
+  }
+  // Fallback to localhost for development
+  return 'localhost:5000';
+}
+
+// Get protocol based on environment
+function getProtocol(domain: string): string {
+  if (domain === 'localhost' || domain.includes('localhost:')) {
+    return 'http';
+  }
+  return 'https';
 }
 
 const getOidcConfig = memoize(
@@ -107,14 +129,13 @@ export async function setupAuth(app: Express) {
     verified(null, user);
   };
 
-  for (const domain of process.env
-    .REPLIT_DOMAINS!.split(",")) {
+  for (const domain of (process.env.REPLIT_DOMAINS || getCurrentDomain()).split(",")) {
     const strategy = new Strategy(
       {
         name: `replitauth:${domain}`,
         config,
         scope: "openid email profile offline_access",
-        callbackURL: `https://${domain}/api/callback`,
+        callbackURL: `${getProtocol(domain)}://${domain}/api/callback`,
       },
       verify,
     );
@@ -151,8 +172,8 @@ export async function setupAuth(app: Express) {
     };
 
     // Determine the correct callback URL based on environment
-    const domain = process.env.REPLIT_DOMAINS?.split(",")[0] || "localhost:5000";
-    const protocol = domain === "localhost" || domain.includes("localhost:") ? "http" : "https";
+    const domain = getCurrentDomain();
+    const protocol = getProtocol(domain);
     const callbackURL = `${protocol}://${domain}/api/callback/google`;
 
     passport.use(
@@ -198,8 +219,8 @@ export async function setupAuth(app: Express) {
     };
 
     // Determine the correct callback URL based on environment
-    const domain = process.env.REPLIT_DOMAINS?.split(",")[0] || "localhost:5000";
-    const protocol = domain === "localhost" || domain.includes("localhost:") ? "http" : "https";
+    const domain = getCurrentDomain();
+    const protocol = getProtocol(domain);
     const callbackURL = `${protocol}://${domain}/api/callback/github`;
 
     passport.use(
@@ -245,8 +266,8 @@ export async function setupAuth(app: Express) {
     };
 
     // Determine the correct callback URL based on environment
-    const domain = process.env.REPLIT_DOMAINS?.split(",")[0] || "localhost:5000";
-    const protocol = domain === "localhost" || domain.includes("localhost:") ? "http" : "https";
+    const domain = getCurrentDomain();
+    const protocol = getProtocol(domain);
     const callbackURL = `${protocol}://${domain}/api/callback/linkedin`;
 
     passport.use(
