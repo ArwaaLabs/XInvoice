@@ -7,12 +7,18 @@ type InvoiceData = {
   status: string;
   template?: string;
   primaryColor?: string;
+  paymentAmount?: number;
+  paidDate?: Date;
   company: {
     name: string;
     email: string;
     phone: string;
     address: string;
     logo?: string;
+    bankName?: string;
+    accountNumber?: string;
+    routingCode?: string;
+    swiftCode?: string;
   };
   client: {
     name: string;
@@ -51,6 +57,58 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
     g: parseInt(result[2], 16),
     b: parseInt(result[3], 16)
   } : { r: 59, g: 130, b: 246 };
+}
+
+function addPaidStamp(doc: jsPDF, paidDate?: Date) {
+  // Draw circular PAID stamp with date
+  const centerX = 105;
+  const centerY = 148;
+  const radius = 28;
+  
+  // Draw double circle border (red/brown color like traditional stamp)
+  doc.setDrawColor(205, 92, 92); // Indian Red color
+  doc.setLineWidth(3);
+  doc.circle(centerX, centerY, radius, 'S');
+  doc.setLineWidth(1.5);
+  doc.circle(centerX, centerY, radius - 3, 'S');
+  
+  // Add "PAID" text
+  doc.setTextColor(205, 92, 92);
+  doc.setFontSize(36);
+  doc.setFont("helvetica", "bold");
+  doc.text("PAID", centerX, centerY - 5, {
+    align: "center",
+    baseline: "middle"
+  });
+  
+  // Add date line and text
+  if (paidDate) {
+    const dateStr = paidDate.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: '2-digit', 
+      year: 'numeric' 
+    });
+    
+    // Draw date label
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("DATE:", centerX - 15, centerY + 12, {
+      align: "left",
+      baseline: "middle"
+    });
+    
+    // Draw date value
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(dateStr, centerX + 12, centerY + 12, {
+      align: "center",
+      baseline: "middle"
+    });
+    
+    // Draw line under date
+    doc.setLineWidth(0.5);
+    doc.line(centerX + 2, centerY + 14, centerX + 22, centerY + 14);
+  }
 }
 
 function generateModernTemplate(doc: jsPDF, data: InvoiceData, subtotal: number, totalDiscount: number, totalTax: number, total: number) {
@@ -169,6 +227,31 @@ function generateModernTemplate(doc: jsPDF, data: InvoiceData, subtotal: number,
   doc.text("Total:", 140, yPos);
   doc.text(`${data.currency}${total.toFixed(2)}`, 175, yPos, { align: "right" });
 
+  // Add payment summary if invoice is paid
+  if (data.status.toLowerCase() === "paid") {
+    yPos += 10;
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    
+    const paidAmount = data.paymentAmount || total;
+    const amountDue = Math.max(0, total - paidAmount);
+    
+    doc.text("Total Paid:", 140, yPos);
+    doc.setTextColor(34, 197, 94); // Green color
+    doc.setFont("helvetica", "bold");
+    doc.text(`${data.currency}${paidAmount.toFixed(2)}`, 175, yPos, { align: "right" });
+    
+    yPos += 7;
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "normal");
+    doc.text("Amount Due:", 140, yPos);
+    doc.text(`${data.currency}${amountDue.toFixed(2)}`, 175, yPos, { align: "right" });
+    
+    // Add PAID stamp with date
+    addPaidStamp(doc, data.paidDate);
+  }
+
   if (data.notes) {
     yPos += 15;
     if (yPos > 250) {
@@ -183,6 +266,45 @@ function generateModernTemplate(doc: jsPDF, data: InvoiceData, subtotal: number,
     doc.setFontSize(9);
     const notesLines = doc.splitTextToSize(data.notes, 170);
     doc.text(notesLines, 20, yPos + 6);
+    yPos += notesLines.length * 5 + 5;
+  }
+
+  // Add banking information
+  if (data.company.bankName || data.company.accountNumber || data.company.routingCode || data.company.swiftCode) {
+    yPos += 15;
+    if (yPos > 250) {
+      doc.addPage();
+      yPos = 20;
+    }
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("Banking Information:", 20, yPos);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    yPos += 7;
+
+    if (data.company.bankName) {
+      doc.text("Bank Name:", 20, yPos);
+      doc.text(data.company.bankName, 50, yPos);
+      yPos += 6;
+    }
+    if (data.company.accountNumber) {
+      doc.text("Account Number:", 20, yPos);
+      doc.text(data.company.accountNumber, 50, yPos);
+      yPos += 6;
+    }
+    if (data.company.routingCode) {
+      const isIFSC = data.company.routingCode.length === 11 && /^[A-Z]{4}0[A-Z0-9]{6}$/.test(data.company.routingCode) ||
+                     (data.company.routingCode.length >= 8 && data.company.routingCode.length <= 11 && /^[A-Z]{4}/.test(data.company.routingCode));
+      doc.text(isIFSC ? "IFSC Code:" : "Routing/Sort Code:", 20, yPos);
+      doc.text(data.company.routingCode, 50, yPos);
+      yPos += 6;
+    }
+    if (data.company.swiftCode) {
+      doc.text("SWIFT/BIC Code:", 20, yPos);
+      doc.text(data.company.swiftCode, 50, yPos);
+    }
   }
 }
 
@@ -301,6 +423,30 @@ function generateClassicTemplate(doc: jsPDF, data: InvoiceData, subtotal: number
   doc.text("Total Due:", 140, yPos);
   doc.text(`${data.currency}${total.toFixed(2)}`, 175, yPos, { align: "right" });
 
+  // Add payment summary if invoice is paid
+  if (data.status.toLowerCase() === "paid") {
+    yPos += 10;
+    doc.setFont("times", "normal");
+    doc.setFontSize(10);
+    
+    const paidAmount = data.paymentAmount || total;
+    const amountDue = Math.max(0, total - paidAmount);
+    
+    doc.text("Total Paid:", 140, yPos);
+    doc.setTextColor(34, 197, 94);
+    doc.setFont("times", "bold");
+    doc.text(`${data.currency}${paidAmount.toFixed(2)}`, 175, yPos, { align: "right" });
+    
+    yPos += 7;
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("times", "normal");
+    doc.text("Amount Due:", 140, yPos);
+    doc.text(`${data.currency}${amountDue.toFixed(2)}`, 175, yPos, { align: "right" });
+    
+    // Add PAID stamp with date
+    addPaidStamp(doc, data.paidDate);
+  }
+
   if (data.notes) {
     yPos += 15;
     if (yPos > 250) {
@@ -314,6 +460,44 @@ function generateClassicTemplate(doc: jsPDF, data: InvoiceData, subtotal: number
     doc.setFontSize(9);
     const notesLines = doc.splitTextToSize(data.notes, 170);
     doc.text(notesLines, 20, yPos + 6);
+    yPos += notesLines.length * 5 + 5;
+  }
+
+  // Add banking information
+  if (data.company.bankName || data.company.accountNumber || data.company.routingCode || data.company.swiftCode) {
+    yPos += 15;
+    if (yPos > 250) {
+      doc.addPage();
+      yPos = 20;
+    }
+    doc.setFont("times", "bold");
+    doc.setFontSize(10);
+    doc.text("Payment Information:", 20, yPos);
+    doc.setFont("times", "normal");
+    doc.setFontSize(9);
+    yPos += 7;
+
+    if (data.company.bankName) {
+      doc.text("Bank Name:", 20, yPos);
+      doc.text(data.company.bankName, 50, yPos);
+      yPos += 6;
+    }
+    if (data.company.accountNumber) {
+      doc.text("Account Number:", 20, yPos);
+      doc.text(data.company.accountNumber, 50, yPos);
+      yPos += 6;
+    }
+    if (data.company.routingCode) {
+      const isIFSC = data.company.routingCode.length === 11 && /^[A-Z]{4}0[A-Z0-9]{6}$/.test(data.company.routingCode) ||
+                     (data.company.routingCode.length >= 8 && data.company.routingCode.length <= 11 && /^[A-Z]{4}/.test(data.company.routingCode));
+      doc.text(isIFSC ? "IFSC Code:" : "Routing Code:", 20, yPos);
+      doc.text(data.company.routingCode, 50, yPos);
+      yPos += 6;
+    }
+    if (data.company.swiftCode) {
+      doc.text("SWIFT/BIC Code:", 20, yPos);
+      doc.text(data.company.swiftCode, 50, yPos);
+    }
   }
 }
 
@@ -393,6 +577,27 @@ function generateMinimalTemplate(doc: jsPDF, data: InvoiceData, subtotal: number
   doc.text("Total:", 140, yPos);
   doc.text(`${data.currency}${total.toFixed(2)}`, 175, yPos, { align: "right" });
 
+  // Add payment summary if invoice is paid
+  if (data.status.toLowerCase() === "paid") {
+    yPos += 8;
+    doc.setFontSize(9);
+    
+    const paidAmount = data.paymentAmount || total;
+    const amountDue = Math.max(0, total - paidAmount);
+    
+    doc.text("Total Paid:", 140, yPos);
+    doc.setTextColor(34, 197, 94);
+    doc.text(`${data.currency}${paidAmount.toFixed(2)}`, 175, yPos, { align: "right" });
+    
+    yPos += 6;
+    doc.setTextColor(0, 0, 0);
+    doc.text("Amount Due:", 140, yPos);
+    doc.text(`${data.currency}${amountDue.toFixed(2)}`, 175, yPos, { align: "right" });
+    
+    // Add PAID stamp with date
+    addPaidStamp(doc, data.paidDate);
+  }
+
   if (data.notes) {
     yPos += 15;
     if (yPos > 250) {
@@ -403,6 +608,41 @@ function generateMinimalTemplate(doc: jsPDF, data: InvoiceData, subtotal: number
     doc.text("Notes:", 20, yPos);
     const notesLines = doc.splitTextToSize(data.notes, 170);
     doc.text(notesLines, 20, yPos + 5);
+    yPos += notesLines.length * 4 + 5;
+  }
+
+  // Add banking information
+  if (data.company.bankName || data.company.accountNumber || data.company.routingCode || data.company.swiftCode) {
+    yPos += 15;
+    if (yPos > 250) {
+      doc.addPage();
+      yPos = 20;
+    }
+    doc.setFontSize(8);
+    doc.text("Payment Details:", 20, yPos);
+    yPos += 6;
+
+    if (data.company.bankName) {
+      doc.text("Bank:", 20, yPos);
+      doc.text(data.company.bankName, 45, yPos);
+      yPos += 5;
+    }
+    if (data.company.accountNumber) {
+      doc.text("Account:", 20, yPos);
+      doc.text(data.company.accountNumber, 45, yPos);
+      yPos += 5;
+    }
+    if (data.company.routingCode) {
+      const isIFSC = data.company.routingCode.length === 11 && /^[A-Z]{4}0[A-Z0-9]{6}$/.test(data.company.routingCode) ||
+                     (data.company.routingCode.length >= 8 && data.company.routingCode.length <= 11 && /^[A-Z]{4}/.test(data.company.routingCode));
+      doc.text(isIFSC ? "IFSC:" : "Routing:", 20, yPos);
+      doc.text(data.company.routingCode, 45, yPos);
+      yPos += 5;
+    }
+    if (data.company.swiftCode) {
+      doc.text("SWIFT:", 20, yPos);
+      doc.text(data.company.swiftCode, 45, yPos);
+    }
   }
 }
 

@@ -402,16 +402,16 @@ export default function Settings() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="routingCode">Routing/Sort Code</Label>
+                  <Label htmlFor="routingCode">Routing/Sort/IFSC Code</Label>
                   <Input
                     id="routingCode"
                     value={routingCode}
-                    onChange={(e) => setRoutingCode(e.target.value)}
-                    placeholder="e.g., IFSC (India), Routing (US), Sort Code (UK)"
+                    onChange={(e) => setRoutingCode(e.target.value.toUpperCase())}
+                    placeholder="e.g., JAKA0QAZIGD (IFSC - India)"
                     data-testid="input-routing-code"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Enter your bank routing code: IFSC (India), Routing Number (US), Sort Code (UK), etc.
+                    🇮🇳 IFSC Code (India) | 🇺🇸 Routing Number (US) | 🇬🇧 Sort Code (UK) | 🌍 Other countries use their local format
                   </p>
                 </div>
 

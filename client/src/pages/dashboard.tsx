@@ -19,6 +19,7 @@ type Invoice = {
   currency: string;
   status: string;
   notes?: string | null;
+  paymentAmount?: string | null;
   items: Array<{
     description: string;
     quantity: number;
@@ -151,12 +152,19 @@ export default function Dashboard() {
       issueDate: new Date(invoice.issueDate),
       dueDate: new Date(invoice.dueDate),
       status: invoice.status,
+      template: settings?.template || "modern",
+      primaryColor: settings?.primaryColor || "#3B82F6",
+      paymentAmount: invoice.paymentAmount ? parseFloat(invoice.paymentAmount) : undefined,
       company: {
         name: settings?.companyName || "Your Company",
         email: settings?.email || "email@company.com",
         phone: settings?.phone || "+1 (555) 000-0000",
         address: settings?.address || "123 Business St, City, State 12345",
         logo: settings?.logo || undefined,
+        bankName: settings?.bankName || undefined,
+        accountNumber: settings?.accountNumber || undefined,
+        routingCode: settings?.routingCode || undefined,
+        swiftCode: settings?.swiftCode || undefined,
       },
       client: {
         name: client?.name || "Unknown Client",

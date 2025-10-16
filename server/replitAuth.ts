@@ -58,7 +58,7 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production", // Only use secure cookies in production
       maxAge: sessionTtl,
     },
   });
@@ -150,12 +150,17 @@ export async function setupAuth(app: Express) {
       }
     };
 
+    // Determine the correct callback URL based on environment
+    const domain = process.env.REPLIT_DOMAINS?.split(",")[0] || "localhost:5000";
+    const protocol = domain === "localhost" || domain.includes("localhost:") ? "http" : "https";
+    const callbackURL = `${protocol}://${domain}/api/callback/google`;
+
     passport.use(
       new GoogleStrategy(
         {
           clientID: process.env.GOOGLE_CLIENT_ID,
           clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          callbackURL: `https://${process.env.REPLIT_DOMAINS!.split(",")[0]}/api/callback/google`,
+          callbackURL: callbackURL,
           scope: ["email", "profile"],
         },
         googleVerify
@@ -192,12 +197,17 @@ export async function setupAuth(app: Express) {
       }
     };
 
+    // Determine the correct callback URL based on environment
+    const domain = process.env.REPLIT_DOMAINS?.split(",")[0] || "localhost:5000";
+    const protocol = domain === "localhost" || domain.includes("localhost:") ? "http" : "https";
+    const callbackURL = `${protocol}://${domain}/api/callback/github`;
+
     passport.use(
       new GitHubStrategy(
         {
           clientID: process.env.GITHUB_CLIENT_ID,
           clientSecret: process.env.GITHUB_CLIENT_SECRET,
-          callbackURL: `https://${process.env.REPLIT_DOMAINS!.split(",")[0]}/api/callback/github`,
+          callbackURL: callbackURL,
           scope: ["user:email"],
         },
         githubVerify
@@ -234,12 +244,17 @@ export async function setupAuth(app: Express) {
       }
     };
 
+    // Determine the correct callback URL based on environment
+    const domain = process.env.REPLIT_DOMAINS?.split(",")[0] || "localhost:5000";
+    const protocol = domain === "localhost" || domain.includes("localhost:") ? "http" : "https";
+    const callbackURL = `${protocol}://${domain}/api/callback/linkedin`;
+
     passport.use(
       new LinkedInStrategy(
         {
           clientID: process.env.LINKEDIN_CLIENT_ID,
           clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-          callbackURL: `https://${process.env.REPLIT_DOMAINS!.split(",")[0]}/api/callback/linkedin`,
+          callbackURL: callbackURL,
           scope: ["email", "profile", "openid"],
         },
         linkedInVerify

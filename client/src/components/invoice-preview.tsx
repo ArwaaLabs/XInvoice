@@ -15,6 +15,10 @@ type InvoiceData = {
     phone: string;
     address: string;
     logo?: string;
+    bankName?: string;
+    accountNumber?: string;
+    routingCode?: string;
+    swiftCode?: string;
   };
   client: {
     name: string;
@@ -210,6 +214,44 @@ export function InvoicePreview({ data }: InvoicePreviewProps) {
               <p className="text-sm">{data.notes}</p>
             </div>
           )}
+
+          {(data.company.bankName || data.company.accountNumber || data.company.routingCode || data.company.swiftCode) && (
+            <div className="space-y-3 border-t pt-6">
+              <h3 className="text-sm font-serif font-bold">Payment Information:</h3>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {data.company.bankName && (
+                  <div className="flex justify-between">
+                    <span className="font-serif">Bank Name:</span>
+                    <span className="font-medium">{data.company.bankName}</span>
+                  </div>
+                )}
+                {data.company.accountNumber && (
+                  <div className="flex justify-between">
+                    <span className="font-serif">Account Number:</span>
+                    <span className="font-medium font-mono">{data.company.accountNumber}</span>
+                  </div>
+                )}
+                {data.company.routingCode && (
+                  <div className="flex justify-between">
+                    <span className="font-serif">
+                      {data.company.routingCode.length === 11 && /^[A-Z]{4}0[A-Z0-9]{6}$/.test(data.company.routingCode) 
+                        ? 'IFSC Code:'
+                        : data.company.routingCode.length >= 8 && data.company.routingCode.length <= 11 && /^[A-Z]{4}/.test(data.company.routingCode)
+                        ? 'IFSC Code:'
+                        : 'Routing Code:'}
+                    </span>
+                    <span className="font-medium font-mono">{data.company.routingCode}</span>
+                  </div>
+                )}
+                {data.company.swiftCode && (
+                  <div className="flex justify-between">
+                    <span className="font-serif">SWIFT/BIC Code:</span>
+                    <span className="font-medium font-mono">{data.company.swiftCode}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </Card>
     );
@@ -318,6 +360,44 @@ export function InvoicePreview({ data }: InvoicePreviewProps) {
             <div className="text-sm border-t pt-4">
               <p className="text-muted-foreground mb-1">Notes:</p>
               <p>{data.notes}</p>
+            </div>
+          )}
+
+          {(data.company.bankName || data.company.accountNumber || data.company.routingCode || data.company.swiftCode) && (
+            <div className="text-sm border-t pt-4">
+              <p className="text-muted-foreground mb-2">Payment Details:</p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                {data.company.bankName && (
+                  <div className="flex gap-2">
+                    <span className="text-muted-foreground">Bank:</span>
+                    <span>{data.company.bankName}</span>
+                  </div>
+                )}
+                {data.company.accountNumber && (
+                  <div className="flex gap-2">
+                    <span className="text-muted-foreground">Account:</span>
+                    <span className="font-mono">{data.company.accountNumber}</span>
+                  </div>
+                )}
+                {data.company.routingCode && (
+                  <div className="flex gap-2">
+                    <span className="text-muted-foreground">
+                      {data.company.routingCode.length === 11 && /^[A-Z]{4}0[A-Z0-9]{6}$/.test(data.company.routingCode) 
+                        ? 'IFSC:'
+                        : data.company.routingCode.length >= 8 && data.company.routingCode.length <= 11 && /^[A-Z]{4}/.test(data.company.routingCode)
+                        ? 'IFSC:'
+                        : 'Routing:'}
+                    </span>
+                    <span className="font-mono">{data.company.routingCode}</span>
+                  </div>
+                )}
+                {data.company.swiftCode && (
+                  <div className="flex gap-2">
+                    <span className="text-muted-foreground">SWIFT:</span>
+                    <span className="font-mono">{data.company.swiftCode}</span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -488,6 +568,44 @@ export function InvoicePreview({ data }: InvoicePreviewProps) {
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-muted-foreground">Notes</h3>
             <p className="text-sm">{data.notes}</p>
+          </div>
+        )}
+
+        {(data.company.bankName || data.company.accountNumber || data.company.routingCode || data.company.swiftCode) && (
+          <div className="space-y-3 border-t pt-6">
+            <h3 className="text-sm font-medium text-muted-foreground">Banking Information</h3>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              {data.company.bankName && (
+                <div>
+                  <span className="text-muted-foreground">Bank Name:</span>
+                  <p className="font-medium">{data.company.bankName}</p>
+                </div>
+              )}
+              {data.company.accountNumber && (
+                <div>
+                  <span className="text-muted-foreground">Account Number:</span>
+                  <p className="font-medium font-mono">{data.company.accountNumber}</p>
+                </div>
+              )}
+              {data.company.routingCode && (
+                <div>
+                  <span className="text-muted-foreground">
+                    {data.company.routingCode.length === 11 && /^[A-Z]{4}0[A-Z0-9]{6}$/.test(data.company.routingCode) 
+                      ? 'IFSC Code:'
+                      : data.company.routingCode.length >= 8 && data.company.routingCode.length <= 11 && /^[A-Z]{4}/.test(data.company.routingCode)
+                      ? 'IFSC Code:'
+                      : 'Routing/Sort Code:'}
+                  </span>
+                  <p className="font-medium font-mono">{data.company.routingCode}</p>
+                </div>
+              )}
+              {data.company.swiftCode && (
+                <div>
+                  <span className="text-muted-foreground">SWIFT/BIC Code:</span>
+                  <p className="font-medium font-mono">{data.company.swiftCode}</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
