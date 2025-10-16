@@ -5,147 +5,155 @@ import { SiGoogle, SiGithub, SiLinkedin } from "react-icons/si";
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      {/* Hero Section */}
-      <div className="container mx-auto px-4 py-16">
-        <div className="flex flex-col items-center text-center space-y-8 max-w-4xl mx-auto">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="h-16 w-16 rounded-xl bg-primary flex items-center justify-center">
-              <FileText className="h-8 w-8 text-primary-foreground" />
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/10">
+      {/* Premium Hero Section */}
+      <div className="container mx-auto px-4 py-20 md:py-32">
+        <div className="flex flex-col items-center text-center space-y-10 max-w-5xl mx-auto animate-fade-in">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="h-20 w-20 rounded-2xl bg-gradient-premium flex items-center justify-center shadow-2xl">
+              <FileText className="h-10 w-10 text-white" />
             </div>
-            <h1 className="text-5xl font-bold tracking-tight">
-              Invoice Pro
+            <h1 className="text-6xl md:text-7xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              InvoiceGenius
             </h1>
           </div>
           
-          <p className="text-2xl text-muted-foreground max-w-2xl">
-            Professional invoice generation made simple. Create beautiful invoices with multi-currency support, tax calculations, and PDF export.
+          <p className="text-2xl md:text-3xl text-muted-foreground max-w-3xl font-medium leading-relaxed">
+            Professional invoice generation made <span className="text-primary font-semibold">simple</span>. Create beautiful invoices with multi-currency support, tax calculations, and PDF export.
           </p>
 
-          <div className="flex flex-col items-center gap-3 mt-8">
-            <p className="text-sm text-muted-foreground mb-2">Sign in with your preferred account</p>
-            <div className="flex flex-wrap gap-3 justify-center">
+          <div className="flex flex-col items-center gap-4 mt-8">
+            <p className="text-base text-muted-foreground font-semibold uppercase tracking-wide">Sign in with your preferred account</p>
+            <div className="flex flex-wrap gap-4 justify-center">
               <Button
                 size="lg"
                 onClick={() => window.location.href = "/api/login/google"}
                 data-testid="button-login-google"
-                className="gap-2"
+                className="gap-3 shadow-lg hover:shadow-xl text-base px-8 h-12"
               >
                 <SiGoogle className="h-5 w-5" />
-                Google
+                Continue with Google
               </Button>
               <Button
                 size="lg"
                 variant="outline"
                 onClick={() => window.location.href = "/api/login/github"}
                 data-testid="button-login-github"
-                className="gap-2"
+                className="gap-3 shadow-lg hover:shadow-xl text-base px-8 h-12"
               >
                 <SiGithub className="h-5 w-5" />
-                GitHub
+                Continue with GitHub
               </Button>
               <Button
                 size="lg"
                 variant="outline"
                 onClick={() => window.location.href = "/api/login/linkedin"}
                 data-testid="button-login-linkedin"
-                className="gap-2"
+                className="gap-3 shadow-lg hover:shadow-xl text-base px-8 h-12"
               >
                 <SiLinkedin className="h-5 w-5" />
-                LinkedIn
+                Continue with LinkedIn
               </Button>
             </div>
           </div>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-24">
-          <Card>
-            <CardHeader>
-              <DollarSign className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Multi-Currency</CardTitle>
-              <CardDescription>
+        {/* Premium Features Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mt-32 animate-slide-in-from-bottom">
+          <Card className="hover:scale-105 transition-transform duration-200">
+            <CardHeader className="text-center">
+              <div className="mx-auto h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                <DollarSign className="h-8 w-8 text-primary" />
+              </div>
+              <CardTitle className="text-xl">Multi-Currency</CardTitle>
+              <CardDescription className="mt-3">
                 Support for USD, EUR, GBP, JPY and more with proper currency grouping
               </CardDescription>
             </CardHeader>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <FileText className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>PDF Export</CardTitle>
-              <CardDescription>
+          <Card className="hover:scale-105 transition-transform duration-200">
+            <CardHeader className="text-center">
+              <div className="mx-auto h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                <FileText className="h-8 w-8 text-primary" />
+              </div>
+              <CardTitle className="text-xl">PDF Export</CardTitle>
+              <CardDescription className="mt-3">
                 Download professional PDFs with customizable templates and branding
               </CardDescription>
             </CardHeader>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <Users className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Client Management</CardTitle>
-              <CardDescription>
+          <Card className="hover:scale-105 transition-transform duration-200">
+            <CardHeader className="text-center">
+              <div className="mx-auto h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                <Users className="h-8 w-8 text-primary" />
+              </div>
+              <CardTitle className="text-xl">Client Management</CardTitle>
+              <CardDescription className="mt-3">
                 Organize clients with contact details and track revenue per client
               </CardDescription>
             </CardHeader>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <Settings className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Customizable</CardTitle>
-              <CardDescription>
+          <Card className="hover:scale-105 transition-transform duration-200">
+            <CardHeader className="text-center">
+              <div className="mx-auto h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                <Settings className="h-8 w-8 text-primary" />
+              </div>
+              <CardTitle className="text-xl">Customizable</CardTitle>
+              <CardDescription className="mt-3">
                 Add your logo, colors, and company details to match your brand
               </CardDescription>
             </CardHeader>
           </Card>
         </div>
 
-        {/* Additional Features */}
-        <div className="mt-24 max-w-3xl mx-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">Everything you need to manage invoices</CardTitle>
-              <CardDescription className="text-base mt-4">
+        {/* Premium Additional Features */}
+        <div className="mt-32 max-w-4xl mx-auto">
+          <Card className="overflow-hidden shadow-2xl">
+            <CardHeader className="bg-gradient-subtle text-center pb-8">
+              <CardTitle className="text-3xl">Everything you need to manage invoices</CardTitle>
+              <CardDescription className="text-lg mt-4">
                 Built for professionals who value simplicity and efficiency
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <div className="h-2 w-2 rounded-full bg-primary" />
+            <CardContent className="p-8">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+                    <div className="h-3 w-3 rounded-full bg-primary" />
                   </div>
                   <div>
-                    <h4 className="font-medium">Tax Calculations</h4>
-                    <p className="text-sm text-muted-foreground">Automatic tax calculations per line item</p>
+                    <h4 className="font-bold text-lg">Tax Calculations</h4>
+                    <p className="text-sm text-muted-foreground mt-1">Automatic tax calculations per line item with customizable rates</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <div className="h-2 w-2 rounded-full bg-primary" />
+                <div className="flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+                    <div className="h-3 w-3 rounded-full bg-primary" />
                   </div>
                   <div>
-                    <h4 className="font-medium">Discounts</h4>
-                    <p className="text-sm text-muted-foreground">Percentage or fixed amount discounts</p>
+                    <h4 className="font-bold text-lg">Discounts</h4>
+                    <p className="text-sm text-muted-foreground mt-1">Percentage or fixed amount discounts per item</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <div className="h-2 w-2 rounded-full bg-primary" />
+                <div className="flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+                    <div className="h-3 w-3 rounded-full bg-primary" />
                   </div>
                   <div>
-                    <h4 className="font-medium">Status Tracking</h4>
-                    <p className="text-sm text-muted-foreground">Draft, sent, paid, and overdue status</p>
+                    <h4 className="font-bold text-lg">Status Tracking</h4>
+                    <p className="text-sm text-muted-foreground mt-1">Draft, sent, paid, and overdue status management</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <div className="h-2 w-2 rounded-full bg-primary" />
+                <div className="flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+                    <div className="h-3 w-3 rounded-full bg-primary" />
                   </div>
                   <div>
-                    <h4 className="font-medium">Dashboard Analytics</h4>
-                    <p className="text-sm text-muted-foreground">Track revenue and pending payments</p>
+                    <h4 className="font-bold text-lg">Dashboard Analytics</h4>
+                    <p className="text-sm text-muted-foreground mt-1">Track revenue, pending payments, and performance metrics</p>
                   </div>
                 </div>
               </div>

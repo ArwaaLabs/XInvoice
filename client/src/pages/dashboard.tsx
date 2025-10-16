@@ -189,31 +189,50 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold">{t('dashboard.title')}</h1>
-          <p className="text-muted-foreground mt-1">
+        <div className="space-y-1">
+          <h1 className="text-4xl font-bold tracking-tight">{t('dashboard.title')}</h1>
+          <p className="text-muted-foreground text-base">
             {t('dashboard.subtitle')}
           </p>
         </div>
-        <Button onClick={() => setLocation("/invoice/new")} data-testid="button-create-invoice">
-          <Plus className="mr-2 h-4 w-4" />
+        <Button 
+          onClick={() => setLocation("/invoice/new")} 
+          data-testid="button-create-invoice"
+          size="lg"
+          className="shadow-lg hover:shadow-xl"
+        >
+          <Plus className="mr-2 h-5 w-5" />
           {t('dashboard.newInvoice')}
         </Button>
       </div>
 
       <InvoiceStats stats={stats} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('dashboard.recentInvoices')}</CardTitle>
-          <CardDescription>{t('dashboard.recentInvoicesDesc')}</CardDescription>
+      <Card className="overflow-hidden">
+        <CardHeader className="bg-gradient-subtle">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl">{t('dashboard.recentInvoices')}</CardTitle>
+              <CardDescription className="mt-1">{t('dashboard.recentInvoicesDesc')}</CardDescription>
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={() => setLocation("/invoices")}
+              className="shadow-sm"
+            >
+              View All
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {invoicesLoading ? (
-            <div className="h-48 flex items-center justify-center text-muted-foreground">
-              {t('dashboard.loadingInvoices')}
+            <div className="h-64 flex items-center justify-center text-muted-foreground">
+              <div className="flex flex-col items-center gap-3">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p>{t('dashboard.loadingInvoices')}</p>
+              </div>
             </div>
           ) : (
             <InvoiceListTable

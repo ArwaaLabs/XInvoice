@@ -5,6 +5,7 @@ import { Search, Filter, Plus } from "lucide-react";
 import { InvoiceListTable, type InvoiceListItem } from "@/components/invoice-list-table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -181,61 +182,74 @@ export default function Invoices() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold">{t('invoices.title')}</h1>
-          <p className="text-muted-foreground mt-1">
+        <div className="space-y-1">
+          <h1 className="text-4xl font-bold tracking-tight">{t('invoices.title')}</h1>
+          <p className="text-muted-foreground text-base">
             {t('invoices.subtitle')}
           </p>
         </div>
-        <Button onClick={() => setLocation("/invoice/new")} data-testid="button-new-invoice">
-          <Plus className="mr-2 h-4 w-4" />
+        <Button 
+          onClick={() => setLocation("/invoice/new")} 
+          data-testid="button-new-invoice"
+          size="lg"
+          className="shadow-lg hover:shadow-xl"
+        >
+          <Plus className="mr-2 h-5 w-5" />
           {t('invoices.createInvoice')}
         </Button>
       </div>
 
-      <div className="flex flex-wrap gap-4">
-        <div className="flex-1 min-w-[300px]">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t('common.search') + '...'}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-              data-testid="input-search"
-            />
+      <Card className="shadow-lg">
+        <CardHeader className="bg-gradient-subtle">
+          <div className="flex flex-wrap gap-4">
+            <div className="flex-1 min-w-[300px]">
+              <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={t('common.search') + '...'}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 shadow-sm"
+                  data-testid="input-search"
+                />
+              </div>
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-48 shadow-sm" data-testid="select-filter-status">
+                <Filter className="mr-2 h-4 w-4" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('invoices.allStatus')}</SelectItem>
+                <SelectItem value="draft">{t('invoices.statuses.draft')}</SelectItem>
+                <SelectItem value="sent">{t('invoices.statuses.sent')}</SelectItem>
+                <SelectItem value="paid">{t('invoices.statuses.paid')}</SelectItem>
+                <SelectItem value="overdue">{t('invoices.statuses.overdue')}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40" data-testid="select-filter-status">
-            <Filter className="mr-2 h-4 w-4" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('invoices.allStatus')}</SelectItem>
-            <SelectItem value="draft">{t('invoices.statuses.draft')}</SelectItem>
-            <SelectItem value="sent">{t('invoices.statuses.sent')}</SelectItem>
-            <SelectItem value="paid">{t('invoices.statuses.paid')}</SelectItem>
-            <SelectItem value="overdue">{t('invoices.statuses.overdue')}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {isLoading ? (
-        <div className="h-48 flex items-center justify-center text-muted-foreground">
-          {t('common.loading')}
-        </div>
-      ) : (
-        <InvoiceListTable
-          invoices={filteredInvoices}
-          onView={(id) => setLocation(`/invoice/${id}`)}
-          onDownload={handleDownload}
-          onSend={handleSend}
-          onDelete={handleDelete}
-        />
-      )}
+        </CardHeader>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="h-64 flex items-center justify-center text-muted-foreground">
+              <div className="flex flex-col items-center gap-3">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p>{t('common.loading')}</p>
+              </div>
+            </div>
+          ) : (
+            <InvoiceListTable
+              invoices={filteredInvoices}
+              onView={(id) => setLocation(`/invoice/${id}`)}
+              onDownload={handleDownload}
+              onSend={handleSend}
+              onDelete={handleDelete}
+            />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

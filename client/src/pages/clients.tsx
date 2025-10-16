@@ -180,52 +180,60 @@ export default function Clients() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold">Clients</h1>
-          <p className="text-muted-foreground mt-1">
+        <div className="space-y-1">
+          <h1 className="text-4xl font-bold tracking-tight">Clients</h1>
+          <p className="text-muted-foreground text-base">
             Manage your client information and history
           </p>
         </div>
-        <Button onClick={openAddDialog} data-testid="button-add-client">
-          <Plus className="mr-2 h-4 w-4" />
+        <Button 
+          onClick={openAddDialog} 
+          data-testid="button-add-client"
+          size="lg"
+          className="shadow-lg hover:shadow-xl"
+        >
+          <Plus className="mr-2 h-5 w-5" />
           Add Client
         </Button>
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search clients..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
-          data-testid="input-search-clients"
+          className="pl-10 max-w-md shadow-sm"
+          data-testid="input-search"
         />
       </div>
 
       {isLoading ? (
-        <div className="h-48 flex items-center justify-center text-muted-foreground">
-          Loading clients...
+        <div className="h-64 flex items-center justify-center text-muted-foreground">
+          <div className="flex flex-col items-center gap-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <p>Loading clients...</p>
+          </div>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredClients.map((client) => {
             const stats = getClientStats(client.id);
             return (
-              <Card key={client.id} className="hover-elevate">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
+              <Card key={client.id} className="transition-all duration-200 hover:shadow-xl">
+                <CardContent className="p-7">
+                  <div className="flex items-start justify-between mb-5">
                     <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarFallback className="bg-primary text-primary-foreground">
+                      <Avatar className="h-12 w-12">
+                        <AvatarFallback className="bg-gradient-premium text-white text-base font-semibold">
                           {getInitials(client.name)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-semibold" data-testid={`text-client-${client.id}`}>{client.name}</h3>
-                        <p className="text-xs text-muted-foreground">
+                        <h3 className="font-bold text-lg" data-testid={`text-client-${client.id}`}>{client.name}</h3>
+                        <p className="text-sm text-muted-foreground font-medium">
                           {stats.totalInvoices} invoices
                         </p>
                       </div>
@@ -253,28 +261,28 @@ export default function Clients() {
                     </DropdownMenu>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Mail className="h-3 w-3" />
+                      <Mail className="h-4 w-4" />
                       <span className="truncate">{client.email}</span>
                     </div>
                     {client.phone && (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Phone className="h-3 w-3" />
+                        <Phone className="h-4 w-4" />
                         <span>{client.phone}</span>
                       </div>
                     )}
                     {client.address && (
                       <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <MapPin className="h-3 w-3 mt-0.5" />
+                        <MapPin className="h-4 w-4 mt-0.5" />
                         <span className="line-clamp-2">{client.address}</span>
                       </div>
                     )}
                   </div>
 
-                  <div className="mt-4 pt-4 border-t flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Total Revenue</span>
-                    <span className="text-lg font-semibold font-mono">
+                  <div className="mt-5 pt-5 border-t flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground font-medium">Total Revenue</span>
+                    <span className="text-xl font-bold font-mono text-primary">
                       {stats.revenueDisplay}
                     </span>
                   </div>

@@ -43,33 +43,36 @@ export function AppSidebar() {
   const { t } = useTranslation();
 
   return (
-    <Sidebar>
-      <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <FileText className="h-5 w-5" />
+    <Sidebar className="border-r border-sidebar-border">
+      <SidebarHeader className="p-6 border-b border-sidebar-border">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-premium shadow-lg">
+            <FileText className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h2 className="text-base font-semibold">{t('appName')}</h2>
-            <p className="text-xs text-muted-foreground">{t('appTagline')}</p>
+            <h2 className="text-lg font-bold tracking-tight">{t('appName')}</h2>
+            <p className="text-xs text-sidebar-foreground/70 font-medium">{t('appTagline')}</p>
           </div>
         </div>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="px-3 py-4">
         <SidebarGroup>
-          <SidebarGroupLabel>{t('nav.dashboard')}</SidebarGroupLabel>
+          <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60 mb-2">
+            {t('nav.dashboard')}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.titleKey}>
                   <SidebarMenuButton
                     asChild
                     isActive={location === item.url}
                     data-testid={`link-${item.titleKey.split('.')[1]}`}
+                    className="rounded-lg transition-all duration-200 hover:bg-sidebar-accent"
                   >
                     <Link href={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{t(item.titleKey)}</span>
+                      <item.icon className="h-5 w-5" />
+                      <span className="font-medium">{t(item.titleKey)}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -78,9 +81,9 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-4">
-        <Button className="w-full" data-testid="button-new-invoice">
-          <Plus className="h-4 w-4 mr-2" />
+      <SidebarFooter className="p-4 border-t border-sidebar-border">
+        <Button className="w-full shadow-md hover:shadow-lg" size="lg" data-testid="button-new-invoice">
+          <Plus className="h-5 w-5 mr-2" />
           {t('dashboard.newInvoice')}
         </Button>
       </SidebarFooter>
