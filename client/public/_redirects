@@ -1,0 +1,6 @@
+# Netlify redirects file for SPA routing
+# API routes to serverless functions
+/api/*  /.netlify/functions/api/:splat  200
+
+# SPA fallback - all other routes go to index.html
+/*  /index.html  200
