@@ -221,6 +221,7 @@
     @apply font-sans antialiased bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    transition: font-family 0.2s ease-in-out;
   }
 
   /* Enhanced Typography Hierarchy */
@@ -253,34 +254,211 @@
     @apply text-base font-medium;
   }
 
-  /* RTL Support - Enhanced */
+  /* ========================================
+   * LANGUAGE-SPECIFIC TYPOGRAPHY & LAYOUT
+   * ======================================== */
+
+  /* English - Default */
+  html.lang-en {
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  }
+
+  html.lang-en body {
+    font-size: 1rem;
+    line-height: 1.5;
+    letter-spacing: -0.011em;
+  }
+
+  /* Arabic - RTL with adjusted spacing */
+  html.lang-ar {
+    font-family: 'Noto Sans Arabic', -apple-system, system-ui, sans-serif;
+  }
+
+  html.lang-ar body {
+    font-size: 1.0625rem; /* 17px - Slightly larger for better readability */
+    line-height: 1.75; /* More spacious line height */
+    letter-spacing: normal;
+  }
+
+  html.lang-ar h1,
+  html.lang-ar h2,
+  html.lang-ar h3,
+  html.lang-ar h4,
+  html.lang-ar h5,
+  html.lang-ar h6 {
+    letter-spacing: normal;
+    font-weight: 700; /* Bolder headings for Arabic */
+  }
+
+  html.lang-ar h1 { font-size: 2.5rem; }
+  html.lang-ar h2 { font-size: 2rem; }
+  html.lang-ar h3 { font-size: 1.625rem; }
+
+  /* Urdu - RTL with Nastaliq script adjustments */
+  html.lang-ur {
+    font-family: 'Noto Nastaliq Urdu', -apple-system, system-ui, sans-serif;
+  }
+
+  html.lang-ur body {
+    font-size: 1.125rem; /* 18px - Larger for Nastaliq script */
+    line-height: 2; /* Extra spacious for flowing script */
+    letter-spacing: normal;
+  }
+
+  html.lang-ur h1,
+  html.lang-ur h2,
+  html.lang-ur h3,
+  html.lang-ur h4,
+  html.lang-ur h5,
+  html.lang-ur h6 {
+    letter-spacing: normal;
+    font-weight: 600;
+    line-height: 1.8;
+  }
+
+  html.lang-ur h1 { font-size: 2.75rem; }
+  html.lang-ur h2 { font-size: 2.25rem; }
+  html.lang-ur h3 { font-size: 1.875rem; }
+
+  /* Hindi - Devanagari script with adjusted metrics */
+  html.lang-hi {
+    font-family: 'Noto Sans Devanagari', -apple-system, system-ui, sans-serif;
+  }
+
+  html.lang-hi body {
+    font-size: 1rem;
+    line-height: 1.75; /* Taller line height for Devanagari */
+    letter-spacing: normal;
+  }
+
+  html.lang-hi h1,
+  html.lang-hi h2,
+  html.lang-hi h3,
+  html.lang-hi h4,
+  html.lang-hi h5,
+  html.lang-hi h6 {
+    letter-spacing: normal;
+    font-weight: 700;
+  }
+
+  html.lang-hi h1 { font-size: 2.375rem; }
+  html.lang-hi h2 { font-size: 1.875rem; }
+  html.lang-hi h3 { font-size: 1.5rem; }
+
+  /* ========================================
+   * RTL LAYOUT ADJUSTMENTS
+   * ======================================== */
+
+  /* RTL base adjustments */
   [dir="rtl"] {
-    font-family: 'Noto Sans Arabic', 'Noto Nastaliq Urdu', var(--font-sans);
     letter-spacing: normal;
   }
 
-  [dir="rtl"][lang="ar"] {
-    font-family: 'Noto Sans Arabic', var(--font-sans);
-    letter-spacing: normal;
-  }
-
-  [dir="rtl"][lang="ur"] {
-    font-family: 'Noto Nastaliq Urdu', var(--font-sans);
-    letter-spacing: normal;
-  }
-
-  [lang="hi"] {
-    font-family: 'Noto Sans Devanagari', var(--font-sans);
-    letter-spacing: normal;
-  }
-
-  /* RTL layout adjustments */
+  /* Flip spacing utilities in RTL */
   [dir="rtl"] .rtl\:space-x-reverse > :not([hidden]) ~ :not([hidden]) {
     --tw-space-x-reverse: 1;
   }
 
   [dir="rtl"] .rtl\:divide-x-reverse > :not([hidden]) ~ :not([hidden]) {
     --tw-divide-x-reverse: 1;
+  }
+
+  /* RTL margin/padding flips */
+  [dir="rtl"] .ml-auto { margin-left: 0; margin-right: auto; }
+  [dir="rtl"] .mr-auto { margin-right: 0; margin-left: auto; }
+  [dir="rtl"] .pl-2 { padding-left: 0; padding-right: 0.5rem; }
+  [dir="rtl"] .pr-2 { padding-right: 0; padding-left: 0.5rem; }
+  [dir="rtl"] .pl-3 { padding-left: 0; padding-right: 0.75rem; }
+  [dir="rtl"] .pr-3 { padding-right: 0; padding-left: 0.75rem; }
+  [dir="rtl"] .pl-4 { padding-left: 0; padding-right: 1rem; }
+  [dir="rtl"] .pr-4 { padding-right: 0; padding-left: 1rem; }
+
+  /* RTL text alignment */
+  [dir="rtl"] .text-left { text-align: right; }
+  [dir="rtl"] .text-right { text-align: left; }
+
+  /* RTL flexbox adjustments */
+  [dir="rtl"] .flex-row { flex-direction: row-reverse; }
+  [dir="rtl"] .justify-start { justify-content: flex-end; }
+  [dir="rtl"] .justify-end { justify-content: flex-start; }
+
+  /* ========================================
+   * RESPONSIVE SPACING FOR LANGUAGES
+   * ======================================== */
+
+  /* Increased spacing for RTL languages in forms */
+  html.lang-ar .space-y-2 > :not([hidden]) ~ :not([hidden]),
+  html.lang-ur .space-y-2 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.625rem; /* Slightly more space */
+  }
+
+  html.lang-ar .space-y-4 > :not([hidden]) ~ :not([hidden]),
+  html.lang-ur .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1.25rem;
+  }
+
+  html.lang-ar .space-y-6 > :not([hidden]) ~ :not([hidden]),
+  html.lang-ur .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1.75rem;
+  }
+
+  /* Adjusted gap for Hindi Devanagari */
+  html.lang-hi .space-y-2 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.625rem;
+  }
+
+  html.lang-hi .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1.125rem;
+  }
+
+  /* ========================================
+   * INPUT & FORM FIELD ADJUSTMENTS
+   * ======================================== */
+
+  /* Taller inputs for non-Latin scripts */
+  html.lang-ar input[type="text"],
+  html.lang-ar input[type="email"],
+  html.lang-ar input[type="search"],
+  html.lang-ar textarea,
+  html.lang-ur input[type="text"],
+  html.lang-ur input[type="email"],
+  html.lang-ur input[type="search"],
+  html.lang-ur textarea,
+  html.lang-hi input[type="text"],
+  html.lang-hi input[type="email"],
+  html.lang-hi input[type="search"],
+  html.lang-hi textarea {
+    min-height: 2.75rem; /* Taller inputs */
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+  }
+
+  /* Urdu needs even more height for Nastaliq */
+  html.lang-ur input[type="text"],
+  html.lang-ur input[type="email"],
+  html.lang-ur input[type="search"],
+  html.lang-ur textarea {
+    min-height: 3rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  /* ========================================
+   * BUTTON ADJUSTMENTS
+   * ======================================== */
+
+  /* Slightly taller buttons for better text visibility */
+  html.lang-ar button,
+  html.lang-ur button {
+    min-height: 2.5rem;
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+  }
+
+  html.lang-hi button {
+    min-height: 2.375rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
   }
 }
 

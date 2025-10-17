@@ -143,10 +143,68 @@ export default {
   plugins: [
     require("tailwindcss-animate"), 
     require("@tailwindcss/typography"),
-    // RTL plugin
-    function({ addVariant }: any) {
+    // Enhanced RTL plugin with comprehensive variants
+    function({ addVariant, addUtilities }: any) {
+      // Direction variants
       addVariant('rtl', '[dir="rtl"] &');
       addVariant('ltr', '[dir="ltr"] &');
+      
+      // Language-specific variants
+      addVariant('lang-ar', 'html.lang-ar &');
+      addVariant('lang-ur', 'html.lang-ur &');
+      addVariant('lang-hi', 'html.lang-hi &');
+      addVariant('lang-en', 'html.lang-en &');
+      
+      // RTL-aware utilities
+      addUtilities({
+        '.rtl-flip': {
+          '[dir="rtl"] &': {
+            transform: 'scaleX(-1)',
+          },
+        },
+        '.rtl-rotate-180': {
+          '[dir="rtl"] &': {
+            transform: 'rotate(180deg)',
+          },
+        },
+        // Logical properties for better RTL support
+        '.start-0': {
+          'inset-inline-start': '0',
+        },
+        '.end-0': {
+          'inset-inline-end': '0',
+        },
+        '.ms-auto': {
+          'margin-inline-start': 'auto',
+        },
+        '.me-auto': {
+          'margin-inline-end': 'auto',
+        },
+        '.ps-2': {
+          'padding-inline-start': '0.5rem',
+        },
+        '.pe-2': {
+          'padding-inline-end': '0.5rem',
+        },
+        '.ps-3': {
+          'padding-inline-start': '0.75rem',
+        },
+        '.pe-3': {
+          'padding-inline-end': '0.75rem',
+        },
+        '.ps-4': {
+          'padding-inline-start': '1rem',
+        },
+        '.pe-4': {
+          'padding-inline-end': '1rem',
+        },
+        '.ps-6': {
+          'padding-inline-start': '1.5rem',
+        },
+        '.pe-6': {
+          'padding-inline-end': '1.5rem',
+        },
+      });
     }
   ],
 } satisfies Config;

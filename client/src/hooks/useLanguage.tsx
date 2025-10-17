@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getDirection, LANGUAGES, RTL_LANGUAGES } from '@/lib/i18n';
+import { getDirection, getLanguageConfig, applyLanguageStyles, LANGUAGES, RTL_LANGUAGES } from '@/lib/i18n';
 
 interface LanguageContextType {
   currentLanguage: string;
@@ -8,6 +8,7 @@ interface LanguageContextType {
   changeLanguage: (lang: string) => void;
   isRTL: boolean;
   languages: typeof LANGUAGES;
+  languageConfig: ReturnType<typeof getLanguageConfig>;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -18,28 +19,24 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     getDirection(i18n.language)
   );
   const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
+  const [languageConfig, setLanguageConfig] = useState(getLanguageConfig(i18n.language));
 
   useEffect(() => {
     const handleLanguageChange = (lng: string) => {
       const newDirection = getDirection(lng);
+      const newConfig = getLanguageConfig(lng);
+      
       setDirection(newDirection);
       setCurrentLanguage(lng);
+      setLanguageConfig(newConfig);
       
-      // Update HTML attributes
-      document.documentElement.dir = newDirection;
-      document.documentElement.lang = lng;
-      
-      // Update body class for RTL-specific styling
-      if (newDirection === 'rtl') {
-        document.body.classList.add('rtl');
-      } else {
-        document.body.classList.remove('rtl');
-      }
+      // Apply comprehensive language styles
+      applyLanguageStyles(lng);
     };
 
     i18n.on('languageChanged', handleLanguageChange);
     
-    // Set initial direction
+    // Set initial state
     handleLanguageChange(i18n.language);
 
     return () => {
@@ -59,6 +56,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     changeLanguage,
     isRTL,
     languages: LANGUAGES,
+    languageConfig,
   };
 
   return (
