@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { LineItemsTable, type LineItem } from "@/components/line-items-table";
 import { InvoicePreview } from "@/components/invoice-preview";
 import { ClientSelector, type Client } from "@/components/client-selector";
+import { CompanySelector, type CompanySettings } from "@/components/company-selector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,13 +28,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation, useParams } from "wouter";
-import { type CompanySettings } from "@shared/schema";
 import { currencies } from "@shared/currencies";
 
 type InvoiceFromAPI = {
   id: string;
   invoiceNumber: string;
   clientId: string;
+  companyId?: string | null;
   issueDate: string;
   dueDate: string;
   status: string;
@@ -64,8 +65,8 @@ export default function InvoiceEditor() {
     queryKey: ["/api/clients"],
   });
 
-  const { data: settings } = useQuery<CompanySettings>({
-    queryKey: ["/api/settings"],
+  const { data: companies = [], isLoading: companiesLoading } = useQuery<CompanySettings[]>({
+    queryKey: ["/api/companies"],
   });
 
   const { data: existingInvoice, isLoading: invoiceLoading } = useQuery<InvoiceFromAPI>({
@@ -79,6 +80,7 @@ export default function InvoiceEditor() {
   });
 
   const [selectedClient, setSelectedClient] = useState<string>();
+  const [selectedCompany, setSelectedCompany] = useState<string>();
   const [issueDate, setIssueDate] = useState<Date>(new Date());
   const [dueDate, setDueDate] = useState<Date>(
     new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)
@@ -100,10 +102,19 @@ export default function InvoiceEditor() {
     },
   ]);
 
+  // Auto-select primary company on load
+  useEffect(() => {
+    if (companies.length > 0 && !selectedCompany && !isEditMode) {
+      const primaryCompany = companies.find(c => c.isPrimary === "true");
+      setSelectedCompany(primaryCompany?.id || companies[0].id);
+    }
+  }, [companies, selectedCompany, isEditMode]);
+
   // Load existing invoice data when in edit mode
   useEffect(() => {
     if (existingInvoice && isEditMode) {
       setSelectedClient(existingInvoice.clientId);
+      setSelectedCompany(existingInvoice.companyId || undefined);
       setIssueDate(new Date(existingInvoice.issueDate));
       setDueDate(new Date(existingInvoice.dueDate));
       setCurrency(existingInvoice.currency);
@@ -153,11 +164,49 @@ export default function InvoiceEditor() {
     }
   };
 
+  const handleAddCompany = async (newCompany: Omit<CompanySettings, "id" | "userId" | "isPrimary" | "isActive" | "createdAt">) => {
+    try {
+      const response = await apiRequest("POST", "/api/companies", newCompany);
+      const company = await response.json();
+      await queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
+      setSelectedCompany(company.id);
+      toast({
+        title: "Company added",
+        description: "New company has been successfully added.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add company.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSave = async (saveStatus: "draft" | "sent" = "draft") => {
     if (!selectedClient) {
       toast({
         title: "Client required",
         description: "Please select a client for this invoice.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedCompany) {
+      toast({
+        title: "Company required",
+        description: "Please select a company for this invoice.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const company = companies.find(c => c.id === selectedCompany);
+    if (!company) {
+      toast({
+        title: "Error",
+        description: "Selected company not found.",
         variant: "destructive",
       });
       return;
@@ -185,6 +234,7 @@ export default function InvoiceEditor() {
 
       const invoiceData: any = {
         clientId: selectedClient,
+        companyId: selectedCompany,
         issueDate: issueDate.toISOString(),
         dueDate: dueDate.toISOString(),
         currency,
@@ -226,7 +276,7 @@ export default function InvoiceEditor() {
         invoiceNumber = invoice.invoiceNumber;
       } else {
         // Create new invoice
-        invoiceNumber = `${settings?.invoicePrefix || "INV"}-${settings?.nextInvoiceNumber || 1001}`;
+        invoiceNumber = `${company.invoicePrefix || "INV"}-${company.nextInvoiceNumber || 1001}`;
         const response = await apiRequest("POST", "/api/invoices", {
           ...invoiceData,
           invoiceNumber,
@@ -234,12 +284,9 @@ export default function InvoiceEditor() {
         invoice = await response.json();
 
         // Increment invoice number only for new invoices
-        if (settings) {
-          await apiRequest("POST", "/api/settings", {
-            ...settings,
-            nextInvoiceNumber: (settings.nextInvoiceNumber || 1001) + 1,
-          });
-        }
+        await apiRequest("PATCH", `/api/companies/${selectedCompany}`, {
+          nextInvoiceNumber: (company.nextInvoiceNumber || 1001) + 1,
+        });
       }
 
       // If status is 'sent', send the email
@@ -249,7 +296,7 @@ export default function InvoiceEditor() {
 
       await queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       if (!isEditMode) {
-        await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+        await queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
       }
 
       toast({
@@ -270,27 +317,28 @@ export default function InvoiceEditor() {
   };
 
   const selectedClientData = clients.find((c) => c.id === selectedClient);
+  const selectedCompanyData = companies.find((c) => c.id === selectedCompany);
   const currencySymbol = currencies.find((c) => c.code === currency)?.symbol || "$";
 
   const previewData = {
     invoiceNumber: isEditMode && existingInvoice 
       ? existingInvoice.invoiceNumber 
-      : `${settings?.invoicePrefix || "INV"}-${settings?.nextInvoiceNumber || 1001}`,
+      : `${selectedCompanyData?.invoicePrefix || "INV"}-${selectedCompanyData?.nextInvoiceNumber || 1001}`,
     issueDate,
     dueDate,
     status,
-    template: settings?.template as "modern" | "classic" | "minimal" | undefined,
-    primaryColor: settings?.primaryColor || undefined,
+    template: selectedCompanyData?.template as "modern" | "classic" | "minimal" | undefined,
+    primaryColor: selectedCompanyData?.primaryColor || undefined,
     company: {
-      name: settings?.companyName || "Your Company",
-      email: settings?.email || "email@company.com",
-      phone: settings?.phone || "+1 (555) 000-0000",
-      address: settings?.address || "123 Business St, City, State 12345",
-      logo: settings?.logo || undefined,
-      bankName: settings?.bankName || undefined,
-      accountNumber: settings?.accountNumber || undefined,
-      routingCode: settings?.routingCode || undefined,
-      swiftCode: settings?.swiftCode || undefined,
+      name: selectedCompanyData?.companyName || "Your Company",
+      email: selectedCompanyData?.email || "email@company.com",
+      phone: selectedCompanyData?.phone || "+1 (555) 000-0000",
+      address: selectedCompanyData?.address || "123 Business St, City, State 12345",
+      logo: selectedCompanyData?.logo || undefined,
+      bankName: selectedCompanyData?.bankName || undefined,
+      accountNumber: selectedCompanyData?.accountNumber || undefined,
+      routingCode: selectedCompanyData?.routingCode || undefined,
+      swiftCode: selectedCompanyData?.swiftCode || undefined,
     },
     client: selectedClientData
       ? {
@@ -362,6 +410,20 @@ export default function InvoiceEditor() {
               <CardTitle>Invoice Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="company">Company</Label>
+                {(companiesLoading || invoiceLoading) ? (
+                  <div className="text-sm text-muted-foreground">Loading...</div>
+                ) : (
+                  <CompanySelector
+                    companies={companies}
+                    value={selectedCompany}
+                    onSelect={setSelectedCompany}
+                    onAddCompany={handleAddCompany}
+                  />
+                )}
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="client">Client</Label>
                 {(clientsLoading || invoiceLoading) ? (

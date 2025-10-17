@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Upload, FileText, Check } from "lucide-react";
+import { Upload, FileText, Check, Trash2, Plus, Star, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,16 +10,38 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { type CompanySettings } from "@shared/schema";
 
 export default function Settings() {
   const { toast } = useToast();
   const { t } = useTranslation();
-  const { data: settings, isLoading } = useQuery<CompanySettings>({
-    queryKey: ["/api/settings"],
+  const { data: companies = [], isLoading } = useQuery<CompanySettings[]>({
+    queryKey: ["/api/companies"],
   });
 
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState<string | null>(null);
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  
   const [companyName, setCompanyName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -37,24 +59,52 @@ export default function Settings() {
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Auto-select primary company or first company on load
   useEffect(() => {
-    if (settings) {
-      setCompanyName(settings.companyName);
-      setEmail(settings.email);
-      setPhone(settings.phone || "");
-      setAddress(settings.address || "");
-      setTaxId(settings.taxId || "");
-      setLogo(settings.logo);
-      setPrimaryColor(settings.primaryColor || "#3B82F6");
-      setInvoicePrefix(settings.invoicePrefix || "INV");
-      setNextNumber(settings.nextInvoiceNumber || 1001);
-      setSelectedTemplate(settings.template || "modern");
-      setBankName(settings.bankName || "");
-      setAccountNumber(settings.accountNumber || "");
-      setRoutingCode(settings.routingCode || "");
-      setSwiftCode(settings.swiftCode || "");
+    if (companies.length > 0 && !selectedCompanyId) {
+      const primaryCompany = companies.find(c => c.isPrimary === "true");
+      setSelectedCompanyId(primaryCompany?.id || companies[0].id);
     }
-  }, [settings]);
+  }, [companies, selectedCompanyId]);
+
+  // Load selected company data
+  useEffect(() => {
+    if (isAddingNew) {
+      // Reset form for new company
+      setCompanyName("");
+      setEmail("");
+      setPhone("");
+      setAddress("");
+      setTaxId("");
+      setLogo(null);
+      setPrimaryColor("#3B82F6");
+      setInvoicePrefix("INV");
+      setNextNumber(1001);
+      setSelectedTemplate("modern");
+      setBankName("");
+      setAccountNumber("");
+      setRoutingCode("");
+      setSwiftCode("");
+    } else if (selectedCompanyId) {
+      const company = companies.find(c => c.id === selectedCompanyId);
+      if (company) {
+        setCompanyName(company.companyName);
+        setEmail(company.email);
+        setPhone(company.phone || "");
+        setAddress(company.address || "");
+        setTaxId(company.taxId || "");
+        setLogo(company.logo);
+        setPrimaryColor(company.primaryColor || "#3B82F6");
+        setInvoicePrefix(company.invoicePrefix || "INV");
+        setNextNumber(company.nextInvoiceNumber || 1001);
+        setSelectedTemplate(company.template || "modern");
+        setBankName(company.bankName || "");
+        setAccountNumber(company.accountNumber || "");
+        setRoutingCode(company.routingCode || "");
+        setSwiftCode(company.swiftCode || "");
+      }
+    }
+  }, [selectedCompanyId, companies, isAddingNew]);
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -85,6 +135,19 @@ export default function Settings() {
     reader.readAsDataURL(file);
   };
 
+  const handleAddNewCompany = () => {
+    setIsAddingNew(true);
+    setSelectedCompanyId(null);
+  };
+
+  const handleCancelNew = () => {
+    setIsAddingNew(false);
+    if (companies.length > 0) {
+      const primaryCompany = companies.find(c => c.isPrimary === "true");
+      setSelectedCompanyId(primaryCompany?.id || companies[0].id);
+    }
+  };
+
   const handleSaveCompany = async () => {
     if (!companyName || !email) {
       toast({
@@ -97,7 +160,7 @@ export default function Settings() {
 
     setIsSaving(true);
     try {
-      await apiRequest("POST", "/api/settings", {
+      const companyData = {
         companyName,
         email,
         phone: phone || null,
@@ -112,12 +175,28 @@ export default function Settings() {
         accountNumber: accountNumber || null,
         routingCode: routingCode || null,
         swiftCode: swiftCode || null,
-      });
-      await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
-      toast({
-        title: t('settings.saveSuccess'),
-        description: t('settings.saveSuccess'),
-      });
+      };
+
+      if (isAddingNew) {
+        // Create new company
+        const response = await apiRequest("POST", "/api/companies", companyData);
+        const newCompany = await response.json();
+        await queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
+        setSelectedCompanyId(newCompany.id);
+        setIsAddingNew(false);
+        toast({
+          title: "Company added",
+          description: "New company has been successfully added.",
+        });
+      } else if (selectedCompanyId) {
+        // Update existing company
+        await apiRequest("PATCH", `/api/companies/${selectedCompanyId}`, companyData);
+        await queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
+        toast({
+          title: t('settings.saveSuccess'),
+          description: t('settings.saveSuccess'),
+        });
+      }
     } catch (error) {
       toast({
         title: t('common.error'),
@@ -129,82 +208,48 @@ export default function Settings() {
     }
   };
 
-  const handleSaveInvoice = async () => {
-    if (!invoicePrefix) {
-      toast({
-        title: t('settings.missingInfo'),
-        description: t('settings.invoicePrefixRequired'),
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSaving(true);
+  const handleSetPrimary = async (companyId: string) => {
     try {
-      await apiRequest("POST", "/api/settings", {
-        companyName,
-        email,
-        phone: phone || null,
-        address: address || null,
-        taxId: taxId || null,
-        logo: logo || null,
-        primaryColor,
-        invoicePrefix,
-        nextInvoiceNumber: nextNumber,
-        template: selectedTemplate,
-        bankName: bankName || null,
-        accountNumber: accountNumber || null,
-        routingCode: routingCode || null,
-        swiftCode: swiftCode || null,
-      });
-      await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      await apiRequest("POST", `/api/companies/${companyId}/set-primary`);
+      await queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
       toast({
-        title: t('settings.saveSuccess'),
-        description: t('settings.saveSuccess'),
+        title: "Primary company updated",
+        description: "This company is now set as your primary company.",
       });
     } catch (error) {
       toast({
         title: t('common.error'),
-        description: t('settings.saveError'),
+        description: "Failed to set primary company.",
         variant: "destructive",
       });
-    } finally {
-      setIsSaving(false);
     }
   };
 
-  const handleSaveTemplate = async () => {
-    setIsSaving(true);
+  const handleDeleteCompany = async () => {
+    if (!companyToDelete) return;
+
     try {
-      await apiRequest("POST", "/api/settings", {
-        companyName,
-        email,
-        phone: phone || null,
-        address: address || null,
-        taxId: taxId || null,
-        logo: logo || null,
-        primaryColor,
-        invoicePrefix,
-        nextInvoiceNumber: nextNumber,
-        template: selectedTemplate,
-        bankName: bankName || null,
-        accountNumber: accountNumber || null,
-        routingCode: routingCode || null,
-        swiftCode: swiftCode || null,
-      });
-      await queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      await apiRequest("DELETE", `/api/companies/${companyToDelete}`);
+      await queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
+      
+      // Select another company after deletion
+      if (selectedCompanyId === companyToDelete) {
+        setSelectedCompanyId(null);
+      }
+      
       toast({
-        title: t('settings.saveSuccess'),
-        description: t('settings.saveSuccess'),
+        title: "Company deleted",
+        description: "Company has been successfully deleted.",
       });
     } catch (error) {
       toast({
         title: t('common.error'),
-        description: t('settings.saveError'),
+        description: "Failed to delete company.",
         variant: "destructive",
       });
     } finally {
-      setIsSaving(false);
+      setDeleteDialogOpen(false);
+      setCompanyToDelete(null);
     }
   };
 
@@ -216,6 +261,8 @@ export default function Settings() {
     );
   }
 
+  const selectedCompany = companies.find(c => c.id === selectedCompanyId);
+
   return (
     <div className="space-y-6">
       <div>
@@ -224,6 +271,62 @@ export default function Settings() {
           {t('settings.subtitle')}
         </p>
       </div>
+
+      {/* Company Selector */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Companies</CardTitle>
+              <CardDescription>Manage your company profiles</CardDescription>
+            </div>
+            <Button
+              onClick={handleAddNewCompany}
+              disabled={isAddingNew}
+              data-testid="button-add-new-company"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Company
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Label>Select Company</Label>
+            <Select
+              value={isAddingNew ? "new" : selectedCompanyId || ""}
+              onValueChange={(value) => {
+                if (value === "new") {
+                  handleAddNewCompany();
+                } else {
+                  setIsAddingNew(false);
+                  setSelectedCompanyId(value);
+                }
+              }}
+            >
+              <SelectTrigger data-testid="select-company">
+                <SelectValue placeholder="Select a company" />
+              </SelectTrigger>
+              <SelectContent>
+                {companies.map((company) => (
+                  <SelectItem key={company.id} value={company.id}>
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4" />
+                      {company.companyName}
+                      {company.isPrimary === "true" && (
+                        <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                      )}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {isAddingNew && (
+              <p className="text-sm text-muted-foreground">Creating new company profile</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="company" className="space-y-6">
         <TabsList>
@@ -235,10 +338,42 @@ export default function Settings() {
         <TabsContent value="company" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>{t('settings.company.title')}</CardTitle>
-              <CardDescription>
-                {t('settings.company.description')}
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>{t('settings.company.title')}</CardTitle>
+                  <CardDescription>
+                    {t('settings.company.description')}
+                  </CardDescription>
+                </div>
+                {!isAddingNew && selectedCompanyId && (
+                  <div className="flex gap-2">
+                    {selectedCompany?.isPrimary !== "true" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSetPrimary(selectedCompanyId)}
+                        data-testid="button-set-primary"
+                      >
+                        <Star className="mr-2 h-4 w-4" />
+                        Set as Primary
+                      </Button>
+                    )}
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        setCompanyToDelete(selectedCompanyId);
+                        setDeleteDialogOpen(true);
+                      }}
+                      disabled={companies.length <= 1}
+                      data-testid="button-delete-company"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </Button>
+                  </div>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
@@ -366,9 +501,21 @@ export default function Settings() {
                 </div>
               </div>
 
-              <Button onClick={handleSaveCompany} disabled={isSaving} data-testid="button-save-company">
-                {isSaving ? t('common.saving') : t('common.save')}
-              </Button>
+              <div className="flex gap-2">
+                {isAddingNew && (
+                  <Button
+                    variant="outline"
+                    onClick={handleCancelNew}
+                    disabled={isSaving}
+                    data-testid="button-cancel-new-company"
+                  >
+                    Cancel
+                  </Button>
+                )}
+                <Button onClick={handleSaveCompany} disabled={isSaving} data-testid="button-save-company">
+                  {isSaving ? t('common.saving') : (isAddingNew ? 'Create Company' : t('common.save'))}
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
@@ -474,7 +621,7 @@ export default function Settings() {
                 </div>
               </div>
 
-              <Button onClick={handleSaveInvoice} disabled={isSaving} data-testid="button-save-invoice-settings">
+              <Button onClick={handleSaveCompany} disabled={isSaving} data-testid="button-save-invoice-settings">
                 {isSaving ? "Saving..." : "Save Changes"}
               </Button>
             </CardContent>
@@ -526,7 +673,7 @@ export default function Settings() {
                 <p className="text-sm text-muted-foreground mb-4">
                   Selected template: <span className="font-medium capitalize">{selectedTemplate}</span>
                 </p>
-                <Button onClick={handleSaveTemplate} disabled={isSaving} data-testid="button-save-template">
+                <Button onClick={handleSaveCompany} disabled={isSaving} data-testid="button-save-template">
                   {isSaving ? "Saving..." : "Save Template"}
                 </Button>
               </div>
@@ -534,6 +681,29 @@ export default function Settings() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Company?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this company? This action cannot be undone.
+              {companyToDelete && selectedCompany?.isPrimary === "true" && (
+                <span className="block mt-2 text-yellow-600">
+                  Warning: This is your primary company. Another company will be automatically set as primary.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteCompany} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

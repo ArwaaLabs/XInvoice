@@ -283,10 +283,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Settings routes - protected and user-specific
+  // Get all companies for the user
+  app.get("/api/companies", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const companies = await storage.getAllCompanySettings(userId);
+      res.json(companies);
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+      res.status(500).json({ error: "Failed to fetch companies" });
+    }
+  });
+
+  // Get a specific company
+  app.get("/api/companies/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const company = await storage.getCompanySettings(userId, req.params.id);
+      if (!company) {
+        return res.status(404).json({ error: "Company not found" });
+      }
+      res.json(company);
+    } catch (error) {
+      console.error("Error fetching company:", error);
+      res.status(500).json({ error: "Failed to fetch company" });
+    }
+  });
+
+  // Get primary company (for backward compatibility)
   app.get("/api/settings", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const settings = await storage.getCompanySettings(userId);
+      const settings = await storage.getPrimaryCompany(userId);
       res.json(settings);
     } catch (error) {
       console.error("Error fetching settings:", error);
@@ -294,6 +322,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create a new company
+  app.post("/api/companies", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const data = insertCompanySettingsSchema.parse(req.body);
+      const company = await storage.createCompanySettings(userId, data);
+      res.status(201).json(company);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Error creating company:", error);
+      res.status(500).json({ error: "Failed to create company" });
+    }
+  });
+
+  // Update a company
+  app.patch("/api/companies/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const data = insertCompanySettingsSchema.partial().parse(req.body);
+      const company = await storage.updateCompanySettings(req.params.id, userId, data);
+      if (!company) {
+        return res.status(404).json({ error: "Company not found" });
+      }
+      res.json(company);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Error updating company:", error);
+      res.status(500).json({ error: "Failed to update company" });
+    }
+  });
+
+  // Delete a company
+  app.delete("/api/companies/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const deleted = await storage.deleteCompanySettings(req.params.id, userId);
+      if (!deleted) {
+        return res.status(404).json({ error: "Company not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting company:", error);
+      res.status(500).json({ error: "Failed to delete company" });
+    }
+  });
+
+  // Set a company as primary
+  app.post("/api/companies/:id/set-primary", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const company = await storage.setPrimaryCompany(req.params.id, userId);
+      if (!company) {
+        return res.status(404).json({ error: "Company not found" });
+      }
+      res.json(company);
+    } catch (error) {
+      console.error("Error setting primary company:", error);
+      res.status(500).json({ error: "Failed to set primary company" });
+    }
+  });
+
+  // Legacy endpoint for backward compatibility - creates or updates primary company
   app.post("/api/settings", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

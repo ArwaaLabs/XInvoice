@@ -39,6 +39,7 @@ export const clients = pgTable("clients", {
 export const invoices = pgTable("invoices", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  companyId: varchar("company_id").references(() => companySettings.id, { onDelete: "set null" }),
   invoiceNumber: text("invoice_number").notNull().unique(),
   clientId: varchar("client_id").notNull().references(() => clients.id, { onDelete: "restrict" }),
   issueDate: timestamp("issue_date").notNull(),
@@ -76,7 +77,7 @@ export const lineItems = pgTable("line_items", {
 
 export const companySettings = pgTable("company_settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   companyName: text("company_name").notNull(),
   email: text("email").notNull(),
   phone: text("phone"),
@@ -91,6 +92,9 @@ export const companySettings = pgTable("company_settings", {
   accountNumber: text("account_number"),
   routingCode: text("routing_code"),
   swiftCode: text("swift_code"),
+  isPrimary: text("is_primary").default("false"),
+  isActive: text("is_active").default("true"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Estimates/Quotes table
